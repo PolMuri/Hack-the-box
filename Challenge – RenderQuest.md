@@ -1,8 +1,6 @@
 Enfocarem el challenge en el supòsit que tenim el codi.
 
-
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu19880x8hs7q.tmp/lu19880x8hs7t_tmp_aa12027ac718ea7f.png)  
-
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/67ee885d-e4e6-4209-9976-4ad0ee61b87d)
 
 Veiem que és una web que fa renders. A priòri és una app que ens pot ser útils per fer templates.
 
@@ -187,7 +185,8 @@ Raw packets sent: 5 (196B) | Rcvd: 2 (84B)`
 El que farem aquí és anar a la web de Hackthebox i descarregar el codi:
 
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu19880x8hs7q.tmp/lu19880x8hs7t_tmp_a6dbd3394901c41e.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/c9840fd4-dfb8-4087-b802-f32be1ebf5f8)
+ 
 
 
 Dockerfile és un fitxer que ens diu com volem aixecar el contenidor, si obrim el fitxer i mirem la primera línia, podem veure amb quina imatge s’ha fet el contenidor.
@@ -197,10 +196,10 @@ Veiem que aquest challenge està fet amb GO, ens hauríem de llegir tot el codi 
 Veiem que hi ha una funció que es diu main i hi veiem els endpoints de l’aplicació:
 
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu19880x8hs7q.tmp/lu19880x8hs7t_tmp_bb2c93ce38253770.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/77a5103a-dfa6-4451-8aee-b47398fc5e7a)
+
 
   
-
 Hem d’interpretar què fa la funció getTpl que és força llarga. Al final arribem a la línia 164 que posa bàsicament que si la url que li posem és remota i no en local que carregui el fitxer en remot.
 
 El template es renderitza al costat del servidor i no del client, i com veurem no comprova res de l’input que hi fem.
@@ -215,7 +214,8 @@ Veiem que hi ha una funció que fa exec.command:
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu19880x8hs7q.tmp/lu19880x8hs7t_tmp_d98665886c367d2f.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/a6dc9f31-6406-4731-afab-40cbff3375da)
+ 
 
 I ens diu que li hem de passar una comanda amb string, primer farem un template i li passarem ls -la per provar-ho.
 
@@ -225,16 +225,19 @@ Farem servir un servei web per fer això, utilitzarem això:
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu19880x8hs7q.tmp/lu19880x8hs7t_tmp_a729bc258e48f7bd.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/6da5a3f3-8168-4a59-814d-c5798184e302)
+ 
 
 ``{{ .FetchServerInfo("cd ..;ls -la")}}``
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu19880x8hs7q.tmp/lu19880x8hs7t_tmp_ac1ab5d835debbfc.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/f38ac16a-0a1d-435b-9efb-4a5cf2d7cb96)
+  
 
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu19880x8hs7q.tmp/lu19880x8hs7t_tmp_1220d2c6827dcc7f.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/61d99b1c-bd57-445f-8268-e95b06df3284)
+ 
 
   
 
@@ -242,6 +245,8 @@ Farem servir un servei web per fer això, utilitzarem això:
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu19880x8hs7q.tmp/lu19880x8hs7t_tmp_4f24f6a096161f1f.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/f1aa89f4-6601-485c-afc9-047adedfbbd8)
+ 
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu19880x8hs7q.tmp/lu19880x8hs7t_tmp_5fbbb2f31b55980a.png)
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/607fd3de-725f-4e4f-bab2-80939ce04a30)
+
