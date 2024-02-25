@@ -2,7 +2,8 @@
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_b70d406ae666024b.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/9bda6e76-0a3e-4a93-a734-9dac6bded607)
+ 
 
 Reddit ha bloquejat la app, però per el challenge ens serveix ja que farem un atac d’URL. Ara hauríem de veure una aplicació sobre gats.
 
@@ -10,18 +11,21 @@ Reddit ha bloquejat la app, però per el challenge ens serveix ja que farem un a
 
 Com tots els challenge que hem fet fins ara està amb Docker:
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_4bb2b51a8a98386d.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/f77a60df-ea9d-4d07-acfc-9357d1d6150e)
+ 
 
 Anem a veure el fitxer Dockerfile i busquem info sobre la flag i cap al final del document veiem que la flag està a una variable d’entorn i a més sabem el nom que té aquesta variable:
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_8148ea054512a3b8.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/891fa524-d8ff-44d9-b35b-d282fa94d499)
+ 
 
 
 Ara analitzarem el codi de la app per veure com funciona. Primer obrim el run.py:
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_bf48b94fc61078ea.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/661d06d3-fc64-46b7-ab3e-ab5debca538f)
+ 
 
 Veiem com al app fa un run per totes les IP’s de la màquina per aquest port concret, per tant nosaltres hem de fer una petició cap aquí per poder accedir a les variables d’entorn.
 
@@ -31,21 +35,24 @@ A aquest fitxer no hi ha més informació, anem ara a application → blueprints
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_d4069eb12c0d667a.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/ca1e2418-a6d0-44e5-98f1-3df537247f04)
+  
 
 
 Veiem les 3 redireccions que es fan:
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_f255732cbf2a7935.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/8ca900cb-3c2b-4362-b17b-5d0903daf564)
+ 
 
 
 Però anem a la ruta on hi ha les rutes d’entorn, i veiem com les carrega i les mostra per pantalla, aquest serà l’endpoint que voldrem atacar:
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_ebae30c3319cd4de.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/e09c2941-188c-4211-9272-d08cbd761db1)
+ 
 
   
 
@@ -96,7 +103,8 @@ return check_ip`
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_d284541565ac478.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/3fbff68a-dd2c-4dab-bc0e-bb4d5389901a)
+
 
   
 Fa un chek_ip i diu que si el request no rpové del localhost retorni un 403, per tant en teoria haurem d’entrar per 127.0.0.1
@@ -106,7 +114,8 @@ Si tornem al fitxer routes.py veiem que / carrega la funció proxy que és el qu
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_db28203f1f2bc919.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/b1578d36-0eee-4ef6-8c37-fc0fd63b6742)
+ 
 
   
 
@@ -142,14 +151,16 @@ Veiem també que la url que carrega la posa aquí:
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_963f8ff54d0d85cd.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/08a77db4-3797-480f-ace4-54ceae3e2c92)
+
 
   
 ``SITE_NAME`` és una variable:
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_f58599b157c479cc.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/73b66078-6884-41c2-a37f-8deb6f50cc00)
+ 
 
   
 
@@ -165,7 +176,8 @@ Al ser la petició interna seva el 127 es fa al servidor. Però, aquesta IP est�
 
   
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_a48a40653f0c85e1.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/3b984b3e-f6b5-4ec7-8389-0701ec1bcf2e)
+ 
 
 
 Però si ho provem amb 0.0.0.0 sí que ens funciona:
@@ -176,8 +188,10 @@ Però si ho provem amb 0.0.0.0 sí que ens funciona:
 
 
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_606d5b8c5b747646.png)  
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/7c6ce383-4e18-4322-9829-2578ee720965)
+ 
 
 I ja tenim al flag: **HTB{fl4gs_4s_4_S3rv1c3}**
 
-![](file:///C:/Users/pmpol/AppData/Local/Temp/lu18992x90bty.tmp/lu18992x90bu2_tmp_97d90c4d549fd9a9.png)
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/7d74cc76-f8f7-4a97-9e18-1683b1cd2f40)
+
