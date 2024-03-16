@@ -1,0 +1,26 @@
+Primer de tot farem un nmap per poder veure quins ports hi ah oberts i els serveis que hi ha darrere aquests ports:
+
+```
+`┌──(polkali㉿kali)-[~]
+└─$ nmap -sC -sV 10.10.11.253
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-03-15 22:42 CET
+Nmap scan report for 10.10.11.253
+Host is up (0.056s latency).
+Not shown: 998 closed tcp ports (conn-refused)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 8.9p1 Ubuntu 3ubuntu0.6 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   256 80:e4:79:e8:59:28:df:95:2d:ad:57:4a:46:04:ea:70 (ECDSA)
+|_  256 e9:ea:0c:1d:86:13:ed:95:a9:d0:0b:c8:22:e4:cf:e9 (ED25519)
+80/tcp open  http    nginx
+|_http-title: Weighted Grade Calculator
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 10.56 seconds`
+```
+
+Ens trobem que té el port 22 amb ssh obert a més a més del port 80 que hosteja una pàgina web sobre un servidor amb nginx.
+
+Si anem a la IP, ens trobem que hi ha allotjada al servidor nginx una web que té la funcionalitat de fer de calculadora de ponderacions perquè els estudiants puguin fer aquesta tasca de forma més simple.
+
