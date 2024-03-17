@@ -108,4 +108,4 @@ The web developer of our team, Tina is a Computer Science major at Acme Universi
 
 ----------------------------------------------------------------------
 
-
+Si anem a http://10.10.11.253/weighted-grade-calc veiem que hi ha la calculadora. Aquí, a la columna Category sembla que es pot injectar mentre que a les altres ens obliga a posar un número. 
