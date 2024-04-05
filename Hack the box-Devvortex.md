@@ -63,8 +63,7 @@ Script[text/javascript], Title[DevVortex], X-UA-Compatible[IE=edge], nginx[1.18.
 
 Un cop accedim amb l’explorador web al domini veiem el següent:
 
-![[Pasted image 20240405210832.png]]  
-
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/2dbfc617-8c38-4283-b120-bbefaacfc8fd)
 
 Ara mirarem el codi font (Cntrl+U) per veure si podem veure amb què o com està fet per si trobéssim un fet amb Wordpress o alguna cosa per l’estil, abaix de tot de la pàgina web segurament també ho veuríem si fos el cas.
 
@@ -99,7 +98,8 @@ PING devvortex.htb (10.10.11.242) 56(84) bytes of data.
 
 I ara ja hi podem accedir amb l’explorador web:
 
-![[Pasted image 20240405211002.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/2cb41f3a-dff5-442f-bff4-0c086727ab05)
+
 
 Tota la web canvia veiem, segurament serà la que voldran tenir ara.
 
@@ -129,7 +129,8 @@ I ens ha tocat el premi, ara podríem haver passat el gobuster a dir (per cercar
 
 Ara anirem a administrator que sembla prometedor, i acabem de descobrir que al darrere hi ha el software Joomla:
 
-![[Pasted image 20240405211121.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/d580b8f0-2d27-44bd-83d7-3e0b8409ad9f)
+
 
 Ara provarem el codi font (Ctrl + U) però tampoc hi veiem res.
 
@@ -152,7 +153,8 @@ Usage: joomscan [options]
 --url | -u <URL> | The Joomla URL/domain to scan.`
 ```
 
-![[Pasted image 20240405211240.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/f6baed9d-ebee-45ee-9398-6f7570235792)
+
 
 Veiem que no té cap WAF per exemple, però el que ens interessa sobretot és la versió que té:
 
@@ -215,12 +217,12 @@ msf6 auxiliary(scanner/http/joomla_api_improper_access_checks) >`
 
 I tenim les dades de la BD, la passwd, etc. A més tenim l’usuari lewis que és Superusuari i podríem provar si funciona:
 
-![[Pasted image 20240405211445.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/4ae51077-4258-4435-8b73-f3c6c09d59f2)
+
 
 I funciona i estem a dins de Joomla amb un usuari administrador, tot per tenir un software desactualitzat:
 
-![[Pasted image 20240405211516.png]]
-
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/b4ced7b2-73de-4779-afea-d75b9cd0c1cb)
 
 
 Ara aquí dins, veiem que ens salta un missatge que ens diu que té una versió de PHP obsoleta, es podria investigar per aquí.
@@ -228,17 +230,20 @@ Ara aquí dins, veiem que ens salta un missatge que ens diu que té una versió 
 Ara hem de buscar alguna pàgina PHP on puguem injectar codi per obrir-nos una shell. 
 Anirem a buscar el sistema de templates:
 
-![[Pasted image 20240405211550.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/0d38f17b-e9c1-4f1f-8f18-c6e9aeb6de3f)
+
 
 Anem a veure els fitxers del template:
 
-![[Pasted image 20240405211605.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/89f3403a-7c9e-488b-8e09-68359720a153)
+
 
 I els podem editar, per tant hem de buscar un reverse shell amb PHP, també en podem pujar o editar un:
 
-![[Pasted image 20240405211627.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/dfcf9a2b-eb35-4caa-a84c-7cbff831bb33)
 
-![[Pasted image 20240405211635.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/137bf4f8-7b62-4538-ac1a-b7bcf847079e)
+
 
 Provarem aquesta comanda per fer la reverse shell trobada a aquesta url:
 
@@ -349,7 +354,8 @@ Hem hagut de modificar el port nostre i posar la IP nostre també.
 
 Ara guardem el fitxer, posem la Kali a escoltar al port i entrarem després a la url. Ara un cop hem desat:
 
-![[Pasted image 20240405211751.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/e8f4679f-434e-459f-80d5-701d02c3ab94)
+
 
 
 Anem a escoltar amb la Kali:
@@ -362,7 +368,8 @@ Anem a escoltar amb la Kali:
 I haurem d’executar aquesta URL: Editing file
 "http://dev.devvortex.htb/administrator/templates/atum/patataPol.php" in template "atum".
 
-![[Pasted image 20240405211828.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/ce60303d-d39d-4fc4-82f7-34463dd97082)
+
 
 Ara amb whoami o id veiem ja que som l’usuari www-data:
 
@@ -485,7 +492,8 @@ mysql>`
 
 Ara primer haurem de mirar el tipus de hash que són:
 
-![[Pasted image 20240405212107.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/f117dcfa-22ca-48c3-80e0-a61a4b54903e)
+
 
 I veiem que és un bcrypt. Ara amb hashcat mirarem si podem crackejar els hash, però primer guardem els hashs a un fitxer:
 
@@ -550,7 +558,8 @@ User logan may run the following commands on devvortex:
 
 Per tant busquem per internet el binari apport-cli què fa. A la primera entrada de totes però ja trobem un CVE:
 
-![[Pasted image 20240405212354.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/47e332ae-afe7-4d17-be62-d6f66d794a0e)
+
 
 
 L’apport-cli és un petit programa que fa un report quan hi ha un crash.
@@ -567,7 +576,8 @@ Veiem que aquesta vulnerabilitat és una escalada de privilegis (justament el qu
 
 Posem la comanda de l’enllaç que hem trobat del CVE al github:
 
-![[Pasted image 20240405212444.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/d774118f-1283-485e-b9d3-09eb9044bcf4)
+
 
 Però no ens va:
 
@@ -673,4 +683,5 @@ root@devvortex:~#
 
 I ja haurem acabat la màquina.
 
-![[Pasted image 20240405212654.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/4dc0d1d4-86df-4757-b725-d10e52517f51)
+
