@@ -128,7 +128,8 @@ Trobem tant el directori /dashboard com el /support. Al directori /dashboard no 
 
 Primer provarem amb injecció sql a veure si obtenim algun resultat:
 
-![[Pasted image 20240324192506.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/5129c2fe-d6c6-47b9-a27e-466eef8c0aef)
+
 
 Sembla que potser podrem obtenir alguna cosa, ara provarem amb SQLmap:
 
@@ -144,11 +145,13 @@ Provarem Cross-Site Scripting (XSS), per exemple provarem el següent a tots els
 
 ``<script>alert("hacked")</script>``
 
-![[Pasted image 20240406222638.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/023fe6ff-cee5-4e70-96ed-1297df41f39c)
+
 
 Al fer-ho l'atac XSS ens retorna el següent missatge:
 
-![[Pasted image 20240406222621.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/abeaddbd-cff3-43a1-a16c-74f5b220c0d1)
+
 
 El missatge ens diu que la nostre IP s'ha marcat i s'ha enviat un informe als administradors del lloc web perquè investiguin el cas.
 
@@ -198,33 +201,41 @@ fname=%60%60%3Cscript%3Ealert%28%22hacked%22%29%3C%2Fscript%3E%60%60&lname=%60%6
 
 Ara provem la cookie trobada d'usuari administrador a veure si ens serveix per accedir al dashboard. Quan accedim al directori /dashboard amb la cookie per defecte no ens hi deixa accedir:
 
-![[Pasted image 20240407124227.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/6d96827e-7410-41f6-b6cf-f328423aa780)
 
-![[Pasted image 20240407124241.png]]
+
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/1c7db8c6-9555-48fa-a964-0e721ccf310d)
+
 
 Quan posem la cookie que hem obtingut d'usuari administrador ja ens hi deixa accedir al /dashboard:
 
-![[Pasted image 20240407124526.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/57917b5f-c591-450a-ac1d-f6d8efc68ad4)
 
-![[Pasted image 20240407124539.png]]
+
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/36322b90-3e9c-4e2b-8981-9e86cea51d5b)
+
 
 Un cop aquí veiem el dashboard on se'ns permet generar un report, anem a veure a on ens porta el botó de generar report (utilitzant la cookie d'admin):
 
-![[Pasted image 20240407124709.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/a5af0e18-bb06-4bab-b88c-9496edffae93)
+
 
 Sembla que des d'aquí podrem accedir a la màquina, de moment només ens deixa seleccionar la data, i veiem que amb la petició al clicar al botó blau fa un POST i posa la data: 
 
-![[Pasted image 20240407125212.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/4f8a2e85-8b69-4dd9-9475-c8c99e12dd2d)
+
 
 Per tant mirarem de modificar la petició post i posar alguna comanda com per exemple 'id' a veure què ens retorna.
 
 Després de fer proves, veiem que s'ha de posar la comanda darrere la data, amb un ; que ho separi:
 
-![[Pasted image 20240407125513.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/52f62228-75e7-484f-9d61-7fca151c065f)
+
 
 I obtenim resposta!!
 
-![[Pasted image 20240407125528.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/9431c95f-63e6-4e5e-b95e-e4424cf69c74)
+
 
 Ara doncs, haurem de mirar de trobar/crear una comanda que ens faci una reverse shell. Primer obrirem un terminal a la nostra màquina per escoltar per el port 4444 per exemple:
 
