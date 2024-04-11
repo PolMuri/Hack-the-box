@@ -91,7 +91,8 @@ Ens trobem amb el port 22 obert per SSH i el port 5000 hi ha Werkzeug que és un
 
 Ara provarem d'accedir a la pàgina pel port 5000 i ens trobem això:
 
-![[Pasted image 20240324184758.png]]
+![image](https://github.com/PolMuri/Hack-the-box/assets/109922379/dde1ce0a-e47e-4945-bc2f-c86e11f928b4)
+
 
 Ara passo una eina com dirsearch per veure quins directoris hi ha ocults als quals hi puc accedir. Afegiré al fitxer de /etc/hosts el nom de domini associat a la IP per poder utilitzar-lo també a la hora d'utilitzar eines:
 
