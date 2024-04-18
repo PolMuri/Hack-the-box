@@ -1,2 +1,2 @@
 # Hack-the-box
-The machines and challenges writeups I have done written in Catalan my native lenguage.
+Machines and challenges writeups I have done written in Catalan my native lenguage.
