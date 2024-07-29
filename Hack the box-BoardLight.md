@@ -43,7 +43,7 @@ I n'hi ha un altre a Newsletter però tampoc obtenim resultats:
 
 ![image](https://github.com/user-attachments/assets/6779a6a5-1910-4b3a-857d-8f5129785cbb)
 
-Per tant, passem a ver una enumeració de de dominis i subdominis a veure is hi ha més sort. Primer afegim el domini al fitxer /etc/hosts:
+Per tant, passem a ver una enumeració de de dominis i subdominis a veure si hi ha més sort. Primer afegim el domini al fitxer /etc/hosts:
 
 ```
 ┌──(polkali㉿kaliPol)-[~]
