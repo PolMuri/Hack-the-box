@@ -35,7 +35,7 @@ Veient que té el port 80 obert, anirem al navegador a buscar la pàgina web d'a
 
 ![image](https://github.com/user-attachments/assets/d043c617-8956-4e1e-8ebb-1dd46c67bae7)
 
-Hi ha un formulari a sota, on provem fer injecció SQL però sense obtenir resultats:
+Hi ha un formulari a sota, on provem de fer injecció SQL però sense obtenir resultats:
 
 ![image](https://github.com/user-attachments/assets/109a348f-7c2c-430f-938d-83b7b182010f)
 
