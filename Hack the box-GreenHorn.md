@@ -86,7 +86,7 @@ Provarem amb un descobriment de subdominis a veure si hi ha més sort:
 
 ``ffuf -u http://board.htb -H "Host: FUZZ.greenhorn.htb" -w /usr/share/amass/wordlists/subdomains-top1mil-5000.txt -c -fs 15949``
 
-No hi ha hagut èxit i no he trobat cap subdomini. Provarem de trobar algun dominique ens pugui ser útil:
+No hi ha hagut èxit i no he trobat cap subdomini. Provarem de trobar algun domini que ens pugui ser útil:
 
 ``gobuster dir --url http://greenhorn.htb/?file=welcome-to-greenhorn / --wordlist /usr/share/wordlists/dirbuster/directory-list-1.0.txt``
 
