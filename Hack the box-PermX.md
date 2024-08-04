@@ -241,3 +241,15 @@ Provem credencials per defecte que s'acostumen a utilitzar al login (admin:admin
 
 Per tant, ens centrarem en el següent que es veu de forma clara a la pàgina, que és Chamilo que cercant per internet veiem que és un sistema d'aprenentatge electrònic i de gestió de continguts de programari lliure, orientat a millorar l'accés a l'educació i el coneixement a nivell mundial. Per tant bucarem si té algun POC o exploit per el qual podem iniciar sessió en aquest login.
 
+Ara, anirem a buscar la flag de l'user:
+
+```
+mtz@permx:~$ cd
+mtz@permx:~$ ls
+bitch  user.txt
+mtz@permx:~$ cat user.txt 
+8e5c0771d88755690cd964335eed0330
+```
+
+Ara que ja tenim la flag de l'usuari, mirarem d'escalar privilegis per aconseguir la de l'usuari root:
+
