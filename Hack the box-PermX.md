@@ -320,7 +320,7 @@ drwxr-xr-x 6 www-data www-data 4096 Jan 20  2024 ..
 -rw-r--r-- 1 www-data www-data 3461 Aug  3 15:43 rs.php`
 ```
 
-No he aconseguit res més amb aquest exploit, però he tronat aquest altre repositori de GitHub que sembla que ens crearà una reverse shell: https://github.com/m3m0o/chamilo-lms-unauthenticated-big-upload-rce-poc?source=post_page-----f2d1b348d7f8--------------------------------
+No he aconseguit res més amb aquest exploit, però he trobat aquest altre repositori de GitHub que sembla que ens crearà una reverse shell: https://github.com/m3m0o/chamilo-lms-unauthenticated-big-upload-rce-poc?source=post_page-----f2d1b348d7f8--------------------------------
 
 Primer clonem el repositori a la nostra màquina
 
