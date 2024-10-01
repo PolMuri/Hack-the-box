@@ -1,5 +1,4 @@
-¡Nuevo! Combinaciones de teclas … Las combinaciones de teclas de Drive se han actualizado para que puedas navegar escribiendo las primeras letras
-Anirem directe al reconeixement actiu, fent un nmap directament i saltant-nos el reconeixement passiu:
+Anirem directe al reconeixement actiu,fent un nmap directament i saltant-nos el reconeixement passiu:
 ```
 ┌──(polkali㉿kaliPol)-[~]
 └─$ nmap -sC -sV -v 10.10.11.32           
