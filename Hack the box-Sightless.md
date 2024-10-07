@@ -91,20 +91,24 @@ Efectivament veiem com ens intenta redirigir al domini redirigeix al domini http
 
 Si anem a veure el que es serveix al port 8081 ens trobem amb una pàgina de login i el que sembla un software anomenat Froxlor, que haurem d'investigar si té alguna vulnerabilitat o potser s'hi pot fer injecció o atacar amb XSS:
 
-![[Pasted image 20240922201616.png]]
+![image](https://github.com/user-attachments/assets/3e3107ea-44b4-4ae8-baf7-f703285bb794)
+
 
 En canvi, si anem al port 80 ens trobem que l'Apache segueix la següent pàgina:
 
-![[Pasted image 20240922201643.png]]
+![image](https://github.com/user-attachments/assets/28c7fcd1-3283-4591-b1e4-9615a4cea14f)
+
 
 Ara mirarem el codi font (Cntrl+U) per veure si podem veure amb què o com està fet per si trobéssim un 'fet amb Wordpress' o alguna cosa per l’estil, abaix de tot de la pàgina web segurament també ho veuríem si fos el cas. He mirat les dues pàgines, tant el formulari ed login com la web de slightless però no he vist res destacable al codi font.
 
 Passarem a analitzar i remenar les web des del navegador. Si anem a Services i cliquem aquí, veiem que hi ha un subdomini que no coneixíem ja que no hem fet cap escaneig de subdominis, l'afegirem a l' /etc/hosts per poder veure què hi ha:
 
-![[Pasted image 20240922211644.png]]
+![image](https://github.com/user-attachments/assets/ff067f13-870d-4a33-a157-0262bd16b762)
+
 Gràcies a això accedim a un panell que s'anomena SQLPad, que, com anunciava la web de sightless, és una aplicació web que permet a usuaris connectar-se a a vàris servidors SQL a través del navegador:
 
-![[Pasted image 20240922211806.png]]
+![image](https://github.com/user-attachments/assets/3aebeda8-a5ab-4072-a3cd-926e90dd5f70)
+
 
 Sembla que pot ser interessant i podrem treure suc d'aquí. He fet alguns intents d'injecció SQL però no hi ha hagut sort, provaré amb XSS o a veure si interceptan les peticions amb Burpsuite aconseguim alguna cosa més.
 
@@ -142,7 +146,7 @@ ETag: W/"1d9-E+82Qgtj4TJN18ynAdqcoit4wXQ"
 {"currentUser":{"id":"noauth","email":"noauth@example.com","role":"admin","name":"noauth"},"config":{"allowCsvDownload":true,"baseUrl":"","defaultConnectionId":"","editorWordWrap":false,"googleAuthConfigured":false,"localAuthConfigured":true,"publicUrl":"","samlConfigured":false,"samlLinkHtml":"Sign in with SSO","ldapConfigured":false,"ldapRolesConfigured":false,"oidcConfigured":false,"oidcLinkHtml":"Sign in with OpenID","showServiceTokensUI":false},"version":"6.10.0"}`
 ```
 
-![[Pasted image 20240922221355.png]]
+![image](https://github.com/user-attachments/assets/e53e1f98-5d77-4181-8967-f3d36c817350)
 
 Per tant, ara que tenim la versió de l'SQLPad que és la 6.10.0 busquem si hi ha algun POC o exploit per aquesta versió en concret. Hem trobat aquest repositori a GitHub el qual sembla que funcionarà i és un POC per aquesta versió del programa: 
 https://github.com/Robocopsita/CVE-2022-0944_RCE_POC 
