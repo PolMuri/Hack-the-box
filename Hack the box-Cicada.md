@@ -138,7 +138,7 @@ Nmap done: 1 IP address (1 host up) scanned in 238.01 seconds
 
 Trobem molts ports oberts: ldpa, kerberos, smb, etc. Al veure que hi ah els ports 139 i 145 oberts, provem d'accedir anònimament a smb: 
 ```
- ──(kali㉿kali)-[~]
+┌──(kali㉿kali)-[~]
 └─$ smbclient -L 10.10.11.35
 Password for [WORKGROUP\kali]:
 
