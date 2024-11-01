@@ -1,3 +1,5 @@
+## NOMÉS HE ACONSEGUIT LA USER FLAG!
+
 Anirem directe al reconeixement actiu,fent un nmap directament i saltant-nos el reconeixement passiu:
 ```
 ┌──(polkali㉿kaliPol)-[~]
