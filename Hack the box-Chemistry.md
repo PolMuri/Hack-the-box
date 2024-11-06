@@ -138,17 +138,21 @@ Ens trobem amb el port 22 obert per SSH i el port 5000 hi ha Werkzeug que és un
 
 Ara provarem d'accedir a la pàgina pel port 5000 i ens trobem això (ara afegeixo també chemistry.htb al fitxer /etc/hosts):
 
-![[Pasted image 20241104191705.png]]
+![image](https://github.com/user-attachments/assets/7f349e83-1dc5-4df4-a04b-62ba22c4e936)
+
 
 Veiem que hi ha un analitzador CIF, una eina especialitzada destinada a l'anàlisi dels fitxers CIF. Sembla que aquesta eina analítica dóna funcionalitats que faciliten l'avaluació de la integritat i la qualitat de les dades.
 
 Com que ens podem registrar o bé iniciar sessió, provarem de crear-nos un compte.
 
-![[Pasted image 20241104192354.png]]
+![image](https://github.com/user-attachments/assets/ffa90677-a4ad-4a3a-be32-75e3ad9026c9)
+
 
 Un cop registrats, tenim una pàgina que ens permet pujar fitxers CIF:
 
-![[Pasted image 20241104193206.png]]
+![image](https://github.com/user-attachments/assets/cc7fd9d7-0617-4b3e-9703-e6594e5e7c45)
+
+
 
 Com que no sé que són els fitxers CIF he buscat per internet hi he trobat que són Arxiu d'Informació Cristalogràfica i és el format estàndard per facilitar l'intercanvi de dades cristal·logràfiques i va ser publicat per primera vegada per Hall, Allen i Brown el 1991.
 
@@ -158,7 +162,8 @@ Pel que veiem, sembla que haurem de trobar la manera i forma de modificar i expl
 
 Al propi dashboard hi ha un exemple a descarregar d'un fitxer CIF:
 
-![[Pasted image 20241104193303.png]]
+![image](https://github.com/user-attachments/assets/7ed6d14c-feed-41b9-a6ff-21b007b4aafd)
+
 
 Després de no saber ben bé què fer amb aquest fitxer CIF, he pensat que podria buscar patrons que resultin en algun exploit dels fitxers CIF, d'aquest en concret.
 
@@ -185,7 +190,8 @@ listening on [any] 4444 ...`
 
 Un cop hem pujat el fitxer modificat hem de clicar a View i és quan se'ns crearà la reverse shell:
 
-![[Pasted image 20241104201402.png]]
+![image](https://github.com/user-attachments/assets/8b70d69c-ecdd-4073-93a8-a7211a446942)
+
 
 ```
 `┌──(polkali㉿kaliPol)-[~]
@@ -229,11 +235,13 @@ $
 
  Veiem que hi ha Linpeas, per tant aprofitem per executar-lo ja que podem si ens fixem en els permisos:
 
-![[Pasted image 20241104212705.png]]
+![image](https://github.com/user-attachments/assets/bde93a8c-04c6-4a9f-9605-32000afbc90b)
+
 
 Gràcies a Linpeas veiem que hi ha el fitxer ``/home/app/instance/database.db`` que sembla prometedor ja que Linpeas ens el marca com a taula llegible de BD:
 
-![[Pasted image 20241104214853.png]]
+![image](https://github.com/user-attachments/assets/387d522f-94d5-4a0d-965a-279865346a8a)
+
 
 I aquí dins veiem que hi ha en format hash les password dels usuaris ja que si ens hi fixem bé, hi apareix l'usuari pol que he creat per poder pujar fitxers CIF al servidor a través del dashboard.
 
@@ -365,6 +373,7 @@ rosa@chemistry:~$
 ```
 
 I ja tenim la user flag:
+
 
 ![image](https://github.com/user-attachments/assets/7cbd0c2a-658a-463f-ac09-9bee684dae03)
 
