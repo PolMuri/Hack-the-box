@@ -312,7 +312,7 @@ Session completed. `
 
 Ara, hem obtingut la password de l'usuari michael:`` insaneclownposse`` . Ara, amb aquesta password provarem d'accedir a algun dels serveis que hi ha oberts: ssh i ftp.
 
-El primer que hem provat ha estat el servei ssh i hem pogut accedir-hi amb l'usuari michael i la seva password, obtenin així la User Flag:
+El primer que hem provat ha estat el servei ssh i hem pogut accedir-hi amb l'usuari michael i la seva password, obtenint així la User Flag:
 
 ```
 ┌──(polkali㉿kaliPol)-[~]
