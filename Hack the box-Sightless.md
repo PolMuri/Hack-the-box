@@ -332,3 +332,55 @@ michael@sightless:~$ cat user.txt
 988301a6ffd5a0df33b4dfb853575730
 michael@sightless:~$ 
 ```
+
+Ara, intentem aconseguir la root flag. Després de moltes i moltes voltes, veiem que sembla que el formulari de login de Froxlor serà per on podrem accedir i escalar privilegis ja que trobem que Froxlor està corrent al port 8080 de la màquina.
+
+```
+michael@sightless:~$ netstat -nltp
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:8080          0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:3306          0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:33771         0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:3000          0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:39793         0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:45297         0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:33060         0.0.0.0:*               LISTEN      -                   
+tcp6       0      0 :::22                   :::*                    LISTEN      -                   
+tcp6       0      0 :::21                   :::*                    LISTEN      -                   
+michael@sightless:~$ 
+```
+
+Veiem que per accedir al dashboard de control de Froxlor, podem utilitzar l'explotació del debugger remot de Chrome: https://exploit-notes.hdks.org/exploit/linux/privilege-escalation/chrome-remote-debugger-pentesting/ . El que hi ha és un problema de política d'execució en la configuració PHP-FPM per a l'usuari Michael a Froxlor.
+
+Veiem que hi ha el port 8080 on corre Froxlor com dèiem i el que hem de fer és un port forwarding per poder tenir el contingut a la nostra màquina (la meva Kali Linux en el meu cas):
+
+```
+┌──(kali㉿kali)-[~]
+└─$  ssh -L 8080:127.0.0.1:8080 michael@10.10.11.32
+michael@10.10.11.32's password: 
+Last login: Wed Nov 13 19:27:58 2024 from 10.10.14.198
+michael@sightless:~$
+``` 
+
+Ara, al haver fet el port forwarding, si anem al navegador com a 127.0.0.1:8080 veurem el formulari de login del Froxlor que està corrent al port 8080:
+
+![[Pasted image 20241113204221.png]]
+
+Com a curiositat, amb localhost no funciona ja que ho detecta com a domini i diu que no està configurat:
+
+![[Pasted image 20241113204210.png]]
+
+
+Ara, al no tenir usuari per fer el login, tornem aquí: Veiem que per accedir al dashboard de control de Froxlor, podem utilitzar l'explotació del debugger remot de Chrome: https://exploit-notes.hdks.org/exploit/linux/privilege-escalation/chrome-remote-debugger-pentesting/ . El que hi ha és un problema de política d'execució en la configuració PHP-FPM per a l'usuari Michael a Froxlor. Per començar, utilitzarem el navegador Chrome per fer-ho, ja que si no evidentment no funcionarà.
+
+Un cop estem amb el Chrome, hem de posar al navegador com si fos una URL el següent: chrome://inspect#devices i des d'aquí hem d'afegir la resta de ports clicant a Configure (excepte el 22 i el 80 ja que són l'ssh i l'http) que hem vist al fer el ``netstat -nltp`` :
+
+![[Pasted image 20241113214239.png]]
+
+Marquem la casella de Enable port forwarding ara. Ara mirem si algun dels ports reenviats és el Froxlor:
