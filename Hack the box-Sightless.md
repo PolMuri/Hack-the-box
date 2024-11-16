@@ -1,4 +1,4 @@
-Anirem directe al reconeixement actiu,fent un nmap directament i saltant-nos el reconeixement passiu:
+Anirem directament al reconeixement actiu per fer-ne via, fent un nmap directament i saltant-nos el reconeixement passiu:
 ```
 ┌──(polkali㉿kaliPol)-[~]
 └─$ nmap -sC -sV -v 10.10.11.32           
