@@ -370,18 +370,19 @@ michael@sightless:~$
 
 Ara, al haver fet el port forwarding, si anem al navegador com a 127.0.0.1:8080 veurem el formulari de login del Froxlor que està corrent al port 8080:
 
-![[Pasted image 20241113204221.png]]
+![image](https://github.com/user-attachments/assets/10637913-f5ca-4aac-90bf-424dc37976d7)
+
 
 Com a curiositat, amb localhost no funciona ja que ho detecta com a domini i diu que no està configurat:
 
-![[Pasted image 20241113204210.png]]
+![image](https://github.com/user-attachments/assets/e520d541-4539-4454-a131-9b1a7218661c)
 
 
 Ara, al no tenir usuari per fer el login, tornem aquí: Veiem que per accedir al dashboard de control de Froxlor, podem utilitzar l'explotació del debugger remot de Chrome: https://exploit-notes.hdks.org/exploit/linux/privilege-escalation/chrome-remote-debugger-pentesting/ . El que hi ha és un problema de política d'execució en la configuració PHP-FPM per a l'usuari Michael a Froxlor. Per començar, utilitzarem el navegador Chrome per fer-ho, ja que si no evidentment no funcionarà.
 
 Un cop estem amb el Chrome, hem de posar al navegador com si fos una URL el següent: chrome://inspect#devices i des d'aquí hem d'afegir la resta de ports clicant a Configure (excepte el 22 i el 80 ja que són l'ssh i l'http) que hem vist al fer el ``netstat -nltp`` :
 
-![[Pasted image 20241113214239.png]]
+![image](https://github.com/user-attachments/assets/bdfd8587-7244-4353-9f79-2407e20a1f72)
 
 Marquem la casella de Enable port forwarding ara. 
 
@@ -475,13 +476,15 @@ Ara, un cop tenim el port forwarding activat obrim Google Chrome i anem a: ``chr
 
 I aquí fem clic a “Configure” i afegim els ports que hem reenviat com a 127.0.0.1:port. Hem de repetir aquest pas per cada un dels ports que hem redirigit. Un cop afegits els port, veiem una connexió sota "Remote Targets". Fem clic a "Inspect" per obrir una nova finestra del navegador que ens permetrà veure el tràfic de la pàgina web.
 
-![[Pasted image 20241117092534.png]]
+![image](https://github.com/user-attachments/assets/1c43abce-4884-471a-b855-ad2b5d7f7394)
 
-![[Pasted image 20241117092549.png]]
+
+![image](https://github.com/user-attachments/assets/7d70b337-d9a7-47d3-b5bd-b4715b757c5d)
+
 
 I ara veiem com en michael inicia sessió amb l'usuari admin i fa login i podem capturar les seves credencials gràcies al port forwarding:
 
-![[Pasted image 20241117092607.png]]
+![image](https://github.com/user-attachments/assets/8ab69c97-f6a7-4bea-b0c5-2b7878fb86f2)
 
 
 D'aquesta manera hem obtingut les credencials i ja podem entrar al dashboard de Froxlor com a usuaris administradors:
@@ -489,23 +492,25 @@ D'aquesta manera hem obtingut les credencials i ja podem entrar al dashboard de 
 admin
 ForlorfroxAdmin
 
-![[Pasted image 20241117092626.png]]
+![image](https://github.com/user-attachments/assets/728142a7-07f4-4516-962d-67369a591abc)
 
 Ara, anem a PHP -> PHP-FPM versions,on  veiem que podem carregar comandes i executar-les directament al sistema, és el mètode que utilitzarem per poder obtenir la root flag. Per fer això, utilitzarem la comanda `cp /root/root.txt /tmp/root.txt` per copiar la flag al directori /tmp per iniciar sessió com root per ssh i guardem amb Save:
 
-![[Pasted image 20241117092712.png]]
+![image](https://github.com/user-attachments/assets/6d0ad3e5-dcea-4b78-a95e-8be7f4b8469c)
 
 Ara deshabilitarem i habilitarem el PHP-FPM per poder executar la comanda des de System>Settings>PHP-FPM:
 
-![[Pasted image 20241117092729.png]]
+![image](https://github.com/user-attachments/assets/965b492d-07fc-4d54-9f3d-b7b83dd07216)
 
-![[Pasted image 20241117092739.png]]
+![image](https://github.com/user-attachments/assets/38c0ea16-c5a5-4c8d-9232-d1dbb6c7e425)
 
-![[Pasted image 20241117092749.png]]
+![image](https://github.com/user-attachments/assets/03ff8ce6-9b06-4b6c-8346-a8c2c9e76347)
+
 
 I ara tornarem a fer el mateix donant permisos de lectura al fitxer /tmp/root.txt amb la comanda chmod 644 que fa que el propietari del fitxer pugui llegir i escriure al fitxer i el grup i altres usuaris només poden llegir el fitxer, però no modificar-lo. `chmod 644 /tmp/root.txt`:
 
-![[Pasted image 20241117092806.png]]
+![image](https://github.com/user-attachments/assets/c28b1e62-d37f-4c2d-b9cf-aa440b7593cc)
+
 
 I ara entrem per ssh amb l'usuari michael i anem al fitxer /tmp/root.txt per poder llegir la root flag:
 
@@ -521,7 +526,8 @@ michael@sightless:~$
 
 I ja hem completat la màquina:
 
-![[Pasted image 20241117092921.png]]
+![image](https://github.com/user-attachments/assets/4639b3b8-7cd1-43ef-b299-30ea963196c9)
+
 
 
 
