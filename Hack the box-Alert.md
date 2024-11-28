@@ -140,3 +140,29 @@ http://alert.htb/index.php?page=alert [200 OK] Apache[2.4.41], Country[RESERVED]
 ```
 
 Veiem que ens redirigeix a un index.php, interessant, segurament hi haurà un formulari per on haurem d'intentar accedir amb XSS o SQL Injection o amb alguna vulnerabilitat d'algun software que no ens apareix amb el whatweb.
+
+Pel que veiem a la pàgina, és una eina/programa web per visualitzar fitxers markdown (.md). Per veure si està limitat correctament la càrrega de fitxers .md provem de pujar una imatge a veure si podem:
+
+IMATGE
+
+Aconseguim pujarla, però ens surt l'error següent:
+
+IMATGE
+
+```
+Error: File must be a Markdown file (.md). 
+```
+
+Per tant, ara, el següent pas que farem serà pujar un fitxer .md a veure si el podem visualitzar correctament amb aquesta eina.
+
+IMATGE
+
+I sí, l'aplicació web funciona i ens permet veure el fitxer markdown que acabem de pujar:
+
+IMATGE
+
+Curíos que a baix a la dreta hi ha un botó que posa "Share markdown". Si hi cliquem ens obre la visualització del markdown en una altra pestanya.
+
+IMATGE
+
+Pel que veiem, sembla que haurem de pujar un fitxer markdown amb alguna reverse shell en php.
