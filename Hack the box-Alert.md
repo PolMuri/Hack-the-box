@@ -142,11 +142,12 @@ Veiem que ens redirigeix a un index.php, interessant, segurament hi haurà un fo
 
 Pel que veiem a la pàgina, és una eina/programa web per visualitzar fitxers markdown (.md). Per veure si està limitat correctament la càrrega de fitxers .md provem de pujar una imatge a veure si podem:
 
-IMATGE
+![image](https://github.com/user-attachments/assets/3925704c-3e31-4f1e-9615-26d145bd3bc8)
 
 Aconseguim pujarla, però ens surt l'error següent:
 
-IMATGE
+![image](https://github.com/user-attachments/assets/5aafac9e-d78c-458a-846f-8a31e41df553)
+
 
 ```
 Error: File must be a Markdown file (.md). 
@@ -154,14 +155,17 @@ Error: File must be a Markdown file (.md).
 
 Per tant, ara, el següent pas que farem serà pujar un fitxer .md a veure si el podem visualitzar correctament amb aquesta eina.
 
-IMATGE
+![image](https://github.com/user-attachments/assets/8012d237-ed28-48d6-9c8c-bf3da0421ac0)
+
 
 I sí, l'aplicació web funciona i ens permet veure el fitxer markdown que acabem de pujar:
 
-IMATGE
+![image](https://github.com/user-attachments/assets/dab1d4bd-1654-4b51-a6db-73770aac162b)
+
 
 Curíos que a baix a la dreta hi ha un botó que posa "Share markdown". Si hi cliquem ens obre la visualització del markdown en una altra pestanya.
 
-IMATGE
+![image](https://github.com/user-attachments/assets/df65cef0-4241-41d1-baef-757f6be29496)
+
 
 Pel que veiem, sembla que haurem de pujar un fitxer markdown amb alguna reverse shell en php.
