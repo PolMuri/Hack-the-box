@@ -326,7 +326,7 @@ I hem trobat aquests fitxers, semblen interessant el contact.php, messages.php i
 
 ![image](https://github.com/user-attachments/assets/2aa50751-e45a-4edf-8164-d3e4fa8a8de9)
 
-Després de provar vàris reverse shell en vàris llenguatges de programació diferents, bash, php, python, i escanejar dominis i subdomnis, provarem a fer XSS. He trobat un payload per fer-ho, que combina XSS (Cross-Site Scripting) i SSRF (Server-Side Request Forgery). El payload que posem al fitxer markwodn és el següent:
+Després de provar vàris reverse shell en vàris llenguatges de programació diferents, bash, php, python, i escanejar dominis i subdomnis, provarem a fer XSS. He trobat un payload per fer-ho i l'utilitzarem amb el fitxer messages.php, ja que el visualizer.php és el de visualització dels markdown i el contact.php el del formulari de contacte. El payload combina XSS (Cross-Site Scripting) i SSRF (Server-Side Request Forgery). El payload que posem al fitxer markwodn és el següent:
 
 ```
 <script>
