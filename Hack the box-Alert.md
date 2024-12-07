@@ -286,6 +286,45 @@ i a /messages/ tampoc:
 
 ![image](https://github.com/user-attachments/assets/d79ddf62-ca2e-4d30-9197-b798968b5108)
 
+He cercat també fitxers .php amb gobuster:
+
+┌──(kali㉿kali)-[~]
+└─$ gobuster dir -u http://alert.htb -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -x php -t 50
+
+````
+===============================================================
+Gobuster v3.6
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://alert.htb
+[+] Method:                  GET
+[+] Threads:                 50
+[+] Wordlist:                /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.6
+[+] Extensions:              php
+[+] Timeout:                 10s
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+/index.php            (Status: 302) [Size: 660] [--> index.php?page=alert]
+/uploads              (Status: 301) [Size: 308] [--> http://alert.htb/uploads/]
+/css                  (Status: 301) [Size: 304] [--> http://alert.htb/css/]
+/.php                 (Status: 403) [Size: 274]
+/contact.php          (Status: 200) [Size: 24]
+/messages             (Status: 301) [Size: 309] [--> http://alert.htb/messages/]
+/messages.php         (Status: 200) [Size: 1]
+/server-status        (Status: 403) [Size: 274]
+/visualizer.php       (Status: 200) [Size: 633]
+Progress: 441120 / 441122 (100.00%)
+===============================================================
+Finished
+===============================================================
+````
+
+I hem trobat aquests fitxers, semblen interessant el contact.php, messages.php i visualizer.php. Com veiem, aquests 3 ens retornen un 200, per tant els podrem utilitzar ja que hi tenim accés. Exemple amb messages.php:
+
+![image](https://github.com/user-attachments/assets/2aa50751-e45a-4edf-8164-d3e4fa8a8de9)
 
 Després de provar vàris reverse shell en vàris llenguatges de programació diferents, bash, php, python, i escanejar dominis i subdomnis, provarem a fer XSS. He trobat un payload per fer-ho, que combina XSS (Cross-Site Scripting) i SSRF (Server-Side Request Forgery). El payload que posem al fitxer markwodn és el següent:
 
