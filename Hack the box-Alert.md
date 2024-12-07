@@ -183,7 +183,111 @@ Mentre a la nostra màquina obrim el port per escoltar:
 listening on [any] 4444 ...
 ```
 
-Ara cliquem a View Markdown, i no veiem res, no es visualitza l'script php però tampoc funciona la reverse shell. Després de provar vàris reverse shell en vàris llenguatges de programació diferents, bash, php, python, ... provarem a fer XSS. He trobat un payload per fer-ho, que combina XSS (Cross-Site Scripting) i SSRF (Server-Side Request Forgery). El payload que posem al fitxer markwodn és el següent:
+Ara cliquem a View Markdown, i no veiem res, no es visualitza l'script php però tampoc funciona la reverse shell.
+
+Com que no me'n surto amb això, passaré a fer una escaneig de subdominis i de dominis. Amb l'escaneig de subdominis fet amb fuff i amb el fitxer de subdominis més gros que tinc a la màquina kali he trobat el subdomini ``statistics`` i l'he afegit al fitxer /etc/hosts/
+
+
+````
+┌──(kali㉿kali)-[/usr/share/wordlists/amass]
+└─$ ffuf -w /usr/share/wordlists/amass/subdomains-top1mil-110000.txt -u http://alert.htb -H "Host:FUZZ.alert.htb" -ac 
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://alert.htb
+ :: Wordlist         : FUZZ: /usr/share/wordlists/amass/subdomains-top1mil-110000.txt
+ :: Header           : Host: FUZZ.alert.htb
+ :: Follow redirects : false
+ :: Calibration      : true
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+statistics              [Status: 401, Size: 467, Words: 42, Lines: 15, Duration: 46ms]
+:: Progress: [114606/114606] :: Job [1/1] :: 1047 req/sec :: Duration: [0:01:57] :: Errors: 0 ::
+````
+
+Si intentem anar al subdomini statistics.alert.htb que ara tenim al fitxer /etc/hosts, ens demana nom i passwd d'usuari, cosa que de moment no tenim, ara, sabem que l'haurem d'aconseguir.
+
+![image](https://github.com/user-attachments/assets/58dab06b-493e-4f0c-b1ba-7317a091cdf3)
+
+Per curiositat, fem un whatweb, però veiem que ens retorn un 401 que no estem autoritzats a accedir-hi i veiem que hi ha un WWW-Authenticate que és el que em vist que ens demana les credencials:
+
+````
+┌──(kali㉿kali)-[~]
+└─$ whatweb http://statistics.alert.htb
+http://statistics.alert.htb [401 Unauthorized] Apache[2.4.41], Country[RESERVED][ZZ], HTTPServer[Ubuntu Linux][Apache/2.4.41 (Ubuntu)], IP[10.10.11.44], Title[401 Unauthorized], WWW-Authenticate[Restricted Area][Basic]
+````
+
+Al fer un curl ens passa el que era previsible, al no estar autoritzats a accedir a aquesta pàgina web, a aquest subdomini, no podem veure el codi font, l'html:
+
+````
+┌──(kali㉿kali)-[~]
+└─$ curl http://statistics.alert.htb
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>401 Unauthorized</title>
+</head><body>
+<h1>Unauthorized</h1>
+<p>This server could not verify that you
+are authorized to access the document
+requested.  Either you supplied the wrong
+credentials (e.g., bad password), or your
+browser doesn't understand how to supply
+the credentials required.</p>
+<hr>
+<address>Apache/2.4.41 (Ubuntu) Server at statistics.alert.htb Port 80</address>
+</body></html>
+````
+
+També hem fet un escaneig de dominis amb gobuster i ehm trobat 3 dominis:
+
+````
+──(kali㉿kali)-[~]
+└─$ gobuster dir --url http://alert.htb / --wordlist /usr/share/wordlists/dirbuster/directory-list-1.0.txt
+===============================================================
+Gobuster v3.6
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://alert.htb
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/wordlists/dirbuster/directory-list-1.0.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.6
+[+] Timeout:                 10s
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+/uploads              (Status: 301) [Size: 308] [--> http://alert.htb/uploads/]
+/css                  (Status: 301) [Size: 304] [--> http://alert.htb/css/]
+/messages             (Status: 301) [Size: 309] [--> http://alert.htb/messages/]
+Progress: 141708 / 141709 (100.00%)
+===============================================================
+Finished
+===============================================================
+````
+
+A /uploads/ no hi podem accedir:
+
+![image](https://github.com/user-attachments/assets/8ea7ea18-2e8f-4933-9085-2a40c720c2d0)
+
+i a /messages/ tampoc:
+
+![image](https://github.com/user-attachments/assets/d79ddf62-ca2e-4d30-9197-b798968b5108)
+
+
+Després de provar vàris reverse shell en vàris llenguatges de programació diferents, bash, php, python, i escanejar dominis i subdomnis, provarem a fer XSS. He trobat un payload per fer-ho, que combina XSS (Cross-Site Scripting) i SSRF (Server-Side Request Forgery). El payload que posem al fitxer markwodn és el següent:
 
 ```
 <script>
