@@ -745,9 +745,3 @@ root@alert:~#
 
 ![image](https://github.com/user-attachments/assets/6851e2cc-75e3-4687-8ca3-279e9384fc44)
 
-
-
-
-
-
-
