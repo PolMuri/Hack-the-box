@@ -627,7 +627,8 @@ albert@alert:~$
 
 I ara, podem anar al navegador amb la nostra màquina kali com a localhost i veure què s'està executant a aquest port i ens trobem amb un dashboard de monitorització web del domini alert.htb i el subdomini statistics.alert.htb:
 
-![[Pasted image 20241207144635.png]]
+![image](https://github.com/user-attachments/assets/9236a772-1c53-451d-bceb-71196f660cf5)
+
 
 Sembla que l'usuari albert ha de tenir permisos per fer alguna cosa que ens portarà a escalar privilegis, per tant, el primer que faig és mirar a quin grup està l'usuari albert, a veure si està dins algun grup en concret:
 
@@ -715,7 +716,7 @@ I ara ja podem anar a localhost al port 8080 executant el fitxer per obtenir la 
 
 Anem al navegador a: http://127.0.0.1:8080/config/revshell_pol.php (/config/revshell_pol.php perquè es troba dins el directori website-monitor que és el de la web):
 
-![[Pasted image 20241207172219.png]]
+![image](https://github.com/user-attachments/assets/6c9e62ae-7295-47cb-8a0c-b6cfcf48ace0)
 
 I ja podem veure i aconseguir la flag de root:
 
@@ -742,7 +743,8 @@ ad1ee98c2c649c4e5a31e12c64490785
 root@alert:~# 
 ```
 
-![[Pasted image 20241207172932.png]]
+![image](https://github.com/user-attachments/assets/6851e2cc-75e3-4687-8ca3-279e9384fc44)
+
 
 
 
