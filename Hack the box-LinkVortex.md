@@ -395,15 +395,18 @@ Amb aquest curl hi ha llibreries externes de jquery carregades sense una verific
 
 Ara anirem a la pàgina web a veure què veiem:
 
-IMATGE
+![image](https://github.com/user-attachments/assets/0dee336b-0c0d-457e-aa33-fc11563a8099)
+
 
 A sota de tot veiem powered by ghost, el software que hem comentat abans al fer el curl, i hi ha un formulari de login:
 
-IMATGE
+![image](https://github.com/user-attachments/assets/77e9b4bc-aabe-423a-a63a-e59744cff4a7)
+
 
 Al clicar el formulari de Sign up no carrega res, però si que veiem que la url canvia:
 
-IMATGE
+![image](https://github.com/user-attachments/assets/d92b40bb-8cfc-4903-9fcd-337e692fd641)
+
 
 Per tant, ara faré un escaneig de subdominis i dominis a veure si aconseguim alguna cosa més. Amb l'escaneig de subdominis fet amb fuff i amb el fitxer de subdominis més gros que tinc a la màquina kali i hem trobat un subdomini -> dev.linkvortex.htb:
 
@@ -438,7 +441,7 @@ dev                     [Status: 200, Size: 2538, Words: 670, Lines: 116, Durati
 
 Abans d'accedir-hi però, farem l'escaneig de dominis a veure si trobem alguna cosa més, en aquesta ocasió ho he fet amb fuff, però no he trobat res rellevant, he filtrat per els que retornen un codi 200 de resposta del servidor, ja que de 301 n'hi havia masses i era impossible filtrar. Per tant, ara anirem al subdomini que hem trobat: dev.linkvortex.htb. Al subdomini si hi anem a través del navegador ens trobem amb que hi ha un avís que la pàgina està en construcció i que en breus la llençaran i estarà en funcionament:
 
-IMATGE
+![image](https://github.com/user-attachments/assets/c2e87ecd-4ab2-410e-a9eb-557b88276f02)
 
 Ara, cercarem a aquest subdomini directoris o fitxers que ens puguin ser útils amb dirb, per canviar una mica d'eina:
 
