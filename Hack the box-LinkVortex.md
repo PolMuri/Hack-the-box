@@ -1,5 +1,5 @@
 Anirem directament al reconeixement actiu, fent un nmap directament i saltant-nos el reconeixement passiu:
-
+```
 ──(kali㉿kali)-[~]
 └─$ nmap -sC -sV -v 10.10.11.47
 Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-12-08 09:52 CET
@@ -58,17 +58,17 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 11.02 seconds
            Raw packets sent: 1004 (44.152KB) | Rcvd: 1001 (40.048KB)
 
-
+```
 
 Trobem dos ports oberts, accés a una web pel port 80 i a la que tinguem unes credencials ens podrem connectar per SSH ja que també hi ha accés al port 22 que és el port ssh per defecte. Ara, per tant, afegirem al fitxer /etc/hosts aquesta IP i l'associarem al nom de domini linkvortex.htb.
 
 Abans de anar al port 80 per el navegador però, farem un wget/curl i un whatweb per veure que hi ha.
 
-
+```
 ┌──(kali㉿kali)-[~]
 └─$ whatweb http://linkvortex.htb                                                                   
 http://linkvortex.htb [200 OK] Apache, Country[RESERVED][ZZ], HTML5, HTTPServer[Apache], IP[10.10.11.47], JQuery[3.5.1], MetaGenerator[Ghost 5.58], Open-Graph-Protocol[website], PoweredBy[Ghost,a], Script[application/ld+json], Title[BitByBit Hardware], X-Powered-By[Express], X-UA-Compatible[IE=edge]
-
+```
 
 Amb aquest whatweb veiem informació que ens pot ser rellevant:
 
@@ -78,6 +78,7 @@ El framework Ghost que és un sistema de gestió de continguts (CMS). En aquest 
 JQuery 3.5.1 es pot investigar si és vulnerable a problemes com Cross-Site Scripting (XSS). També hi ha Open-Graph i compatibilitat amb IE, tocarà investigar-ho.
 
 Ara fem un curl:
+```
 
 ┌──(kali㉿kali)-[~]
 └─$ curl http://linkvortex.htb
@@ -389,7 +390,7 @@ $(document).ready(function () {
 </body>
 </html>
                                          
-
+```
 
 Amb aquest curl hi ha llibreries externes de jquery carregades sense una verificació estricta, i s'haurà de mirar el codi personalitzat que es carrega a veure si s'hi pot fer XSS. El més rellevant potser és que hi ha un software que s'anomena Ghost, i veiem la versió que té, si trobem exploits per ell els podríem utilitzar: `<meta name="generator" content="Ghost 5.58">`. També hi ha recursos que no es carreguen per https i es carreguen per http. Haurem de veure si alguna d'aquestes coses ens és útil.
 
@@ -410,7 +411,7 @@ Al clicar el formulari de Sign up no carrega res, però si que veiem que la url 
 
 Per tant, ara faré un escaneig de subdominis i dominis a veure si aconseguim alguna cosa més. Amb l'escaneig de subdominis fet amb fuff i amb el fitxer de subdominis més gros que tinc a la màquina kali i hem trobat un subdomini -> dev.linkvortex.htb:
 
-
+```
 ┌──(kali㉿kali)-[~]
 └─$ ffuf -w /usr/share/wordlists/amass/subdomains-top1mil-110000.txt -u http://linkvortex.htb -H "Host:FUZZ.linkvortex.htb" -ac
 
@@ -437,7 +438,7 @@ ________________________________________________
 
 dev                     [Status: 200, Size: 2538, Words: 670, Lines: 116, Duration: 322ms]
 :: Progress: [114606/114606] :: Job [1/1] :: 332 req/sec :: Duration: [0:14:25] :: Errors: 0 ::
-
+```
 
 Abans d'accedir-hi però, farem l'escaneig de dominis a veure si trobem alguna cosa més, en aquesta ocasió ho he fet amb fuff, però no he trobat res rellevant, he filtrat per els que retornen un codi 200 de resposta del servidor, ja que de 301 n'hi havia masses i era impossible filtrar. Per tant, ara anirem al subdomini que hem trobat: dev.linkvortex.htb. Al subdomini si hi anem a través del navegador ens trobem amb que hi ha un avís que la pàgina està en construcció i que en breus la llençaran i estarà en funcionament:
 
@@ -445,7 +446,7 @@ Abans d'accedir-hi però, farem l'escaneig de dominis a veure si trobem alguna c
 
 Ara, cercarem a aquest subdomini directoris o fitxers que ens puguin ser útils amb dirb, per canviar una mica d'eina:
 
-                                                                                                                                                                                                                                           
+```                                                                                                                                                                                                                                           
 ┌──(kali㉿kali)-[~]
 └─$ dirb http://dev.linkvortex.htb /usr/share/wordlists/dirb/common.txt
 
@@ -472,6 +473,6 @@ GENERATED WORDS: 4612
 -----------------
 END_TIME: Mon Dec  9 13:51:01 2024
 DOWNLOADED: 4612 - FOUND: 4
-
+```
 
 Sembla que l'únic interessant trobat és el que sembla ser un repositori de GitHub, anirem a la URL a veure què trobem i també podem descarregarlo a veure què hi ha:
