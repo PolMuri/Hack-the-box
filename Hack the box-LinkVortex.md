@@ -475,4 +475,65 @@ END_TIME: Mon Dec  9 13:51:01 2024
 DOWNLOADED: 4612 - FOUND: 4
 ```
 
-Sembla que l'únic interessant trobat és el que sembla ser un repositori de GitHub, anirem a la URL a veure què trobem i també podem descarregarlo a veure què hi ha:
+Sembla que l'únic interessant trobat és el que sembla ser un repositori de GitHub, anirem a la URL a veure què trobem i també podem descarregarlo a veure què hi ha ja que això indica que el repositori Git és accessible al servidor. Això pot ser una vulnerabilitat seriosa, ja que et permet descarregar el repositori complet i accedir al seu historial, commits, i fitxers sensibles que podrien haver estat eliminats però segueixen estant disponibles al repositori. Efectivament, si anem a la ruta a través de la url veiem el repositori i podem accedir als seus fitxers i directoris:
+
+![image](https://github.com/user-attachments/assets/054034fe-ba1b-42bd-a554-e6db5867aa73)
+
+
+![image](https://github.com/user-attachments/assets/660a407a-8821-47f0-9240-84a0381d6a62)
+
+
+El que faré serà descarregar el repositori amb les dades que hi ha al fitxer config:
+```
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ git clone https://github.com/TryGhost/Ghost.git
+Cloning into 'Ghost'...
+remote: Enumerating objects: 405239, done.
+remote: Counting objects: 100% (3604/3604), done.
+remote: Compressing objects: 100% (1572/1572), done.
+remote: Total 405239 (delta 2396), reused 2903 (delta 1992), pack-reused 401635 (from 1)
+Receiving objects: 100% (405239/405239), 322.77 MiB | 6.11 MiB/s, done.
+Resolving deltas: 100% (273926/273926), done.
+                                                                                                                           
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ ls -la
+total 12
+drwxrwxr-x 3 kali kali 4096 Dec 10 10:57 .
+drwxr-xr-x 5 kali kali 4096 Dec 10 10:57 ..
+drwxrwxr-x 9 kali kali 4096 Dec 10 10:59 Ghost
+```
+```
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ cd Ghost     
+                                                                                                                           
+┌──(kali㉿kali)-[~/Documents/LinkVortex/Ghost]
+└─$ ls -la
+total 1540
+drwxrwxr-x  9 kali kali    4096 Dec 10 10:59 .
+drwxrwxr-x  3 kali kali    4096 Dec 10 10:57 ..
+drwxrwxr-x  2 kali kali    4096 Dec 10 10:59 .devcontainer
+drwxrwxr-x  5 kali kali    4096 Dec 10 10:59 .docker
+-rw-rw-r--  1 kali kali      62 Dec 10 10:59 .dockerignore
+-rw-rw-r--  1 kali kali     312 Dec 10 10:59 .editorconfig
+drwxrwxr-x  8 kali kali    4096 Dec 10 10:59 .git
+-rw-rw-r--  1 kali kali     122 Dec 10 10:59 .gitattributes
+drwxrwxr-x  7 kali kali    4096 Dec 10 10:59 .github
+-rw-rw-r--  1 kali kali    3276 Dec 10 10:59 .gitignore
+-rw-rw-r--  1 kali kali     270 Dec 10 10:59 .gitmodules
+drwxrwxr-x  2 kali kali    4096 Dec 10 10:59 .vscode
+-rw-rw-r--  1 kali kali    1065 Dec 10 10:59 LICENSE
+-rw-rw-r--  1 kali kali    2687 Dec 10 10:59 PRIVACY.md
+-rw-rw-r--  1 kali kali    5187 Dec 10 10:59 README.md
+-rw-rw-r--  1 kali kali     518 Dec 10 10:59 SECURITY.md
+drwxrwxr-x 12 kali kali    4096 Dec 10 10:59 apps
+-rw-rw-r--  1 kali kali    1794 Dec 10 10:59 compose.yml
+drwxrwxr-x 88 kali kali    4096 Dec 10 10:59 ghost
+-rw-rw-r--  1 kali kali    1113 Dec 10 10:59 nx.json
+-rw-rw-r--  1 kali kali    4369 Dec 10 10:59 package.json
+-rw-rw-r--  1 kali kali 1479141 Dec 10 10:59 yarn.lock
+```
+
+Ara tocarà revisar la informació del repositori descarregat i a veure què trobem que ens pugui ser d'utilitat.
+
+
+
