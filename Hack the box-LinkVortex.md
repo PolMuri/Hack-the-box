@@ -535,5 +535,153 @@ drwxrwxr-x 88 kali kali    4096 Dec 10 10:59 ghost
 
 Ara tocarà revisar la informació del repositori descarregat i a veure què trobem que ens pugui ser d'utilitat.
 
+Primer de tot he fet un grep per veure què podem trobar dins el repo, però hem trobat massa coses resultant en un output massa gros:
 
+``grep -Ri "password\|secret\|token\|key\|user" .``
+
+Per tant, he buscat per internet i he vist que hi ha un script/eina en python per poder reconstruir i descarregar completament repositoris i la provarem a veure si funciona. Ho he tret d'aquest repositori: https://github.com/arthaud/git-dumper i aquí hi ha el mateix: https://pypi.org/project/git-dumper/
+
+Ara, l'instal·laré a veure si ens funciona i podem reconstruir el repositori que hem descarregat:
+
+```
+`┌──(kali㉿kali)-[~/Documents]
+└─$ pip install git-dumper
+Defaulting to user installation because normal site-packages is not writeable
+Collecting git-dumper
+  Downloading git_dumper-1.0.8-py3-none-any.whl.metadata (3.0 kB)
+Requirement already satisfied: PySocks in /usr/lib/python3/dist-packages (from git-dumper) (1.7.1)
+Requirement already satisfied: requests in /usr/lib/python3/dist-packages (from git-dumper) (2.32.3)
+Requirement already satisfied: beautifulsoup4 in /usr/lib/python3/dist-packages (from git-dumper) (4.12.3)
+Collecting dulwich (from git-dumper)
+  Downloading dulwich-0.22.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.3 kB)
+Collecting requests-pkcs12 (from git-dumper)
+  Downloading requests_pkcs12-1.25-py3-none-any.whl.metadata (3.5 kB)
+Requirement already satisfied: soupsieve>1.2 in /usr/lib/python3/dist-packages (from beautifulsoup4->git-dumper) (2.6)
+Requirement already satisfied: urllib3>=1.25 in /usr/lib/python3/dist-packages (from dulwich->git-dumper) (2.2.3)
+Requirement already satisfied: certifi>=2017.4.17 in /usr/lib/python3/dist-packages (from requests->git-dumper) (2024.8.30)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/lib/python3/dist-packages (from requests->git-dumper) (3.3.2)
+Requirement already satisfied: idna<4,>=2.5 in /usr/lib/python3/dist-packages (from requests->git-dumper) (3.8)
+Requirement already satisfied: cryptography>=42.0.0 in /usr/lib/python3/dist-packages (from requests-pkcs12->git-dumper) (42.0.5)
+Downloading git_dumper-1.0.8-py3-none-any.whl (9.4 kB)
+Downloading dulwich-0.22.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (981 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 981.3/981.3 kB 6.9 MB/s eta 0:00:00
+Downloading requests_pkcs12-1.25-py3-none-any.whl (6.1 kB)
+Installing collected packages: dulwich, requests-pkcs12, git-dumper
+Successfully installed dulwich-0.22.6 git-dumper-1.0.8 requests-pkcs12-1.25
+                                                                               
+````
+
+Ara descarregarem i  reconstruirem el repositori una altra vegada però amb aquesta eina:
+
+```
+`┌──(kali㉿kali)-[~/Documents]
+└─$ git-dumper http://dev.linkvortex.htb/.git/ ~/linkvortex
+
+[-] Testing http://dev.linkvortex.htb/.git/HEAD [200]
+[-] Testing http://dev.linkvortex.htb/.git/ [200]
+[-] Fetching .git recursively
+[-] Fetching http://dev.linkvortex.htb/.gitignore [404]
+[-] http://dev.linkvortex.htb/.gitignore responded with status code 404
+[-] Fetching http://dev.linkvortex.htb/.git/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/refs/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/HEAD [200]
+[-] Fetching http://dev.linkvortex.htb/.git/config [200]
+[-] Fetching http://dev.linkvortex.htb/.git/description [200]
+[-] Fetching http://dev.linkvortex.htb/.git/packed-refs [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/logs/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/index [200]
+[-] Fetching http://dev.linkvortex.htb/.git/info/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/shallow [200]
+[-] Fetching http://dev.linkvortex.htb/.git/objects/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/refs/tags/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/logs/HEAD [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/applypatch-msg.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/pre-merge-commit.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/pre-applypatch.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/pre-commit.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/post-update.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/fsmonitor-watchman.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/commit-msg.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/pre-push.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/push-to-checkout.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/pre-rebase.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/prepare-commit-msg.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/update.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/objects/e6/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/objects/50/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/hooks/pre-receive.sample [200]
+[-] Fetching http://dev.linkvortex.htb/.git/objects/pack/ [200]
+[-] Fetching http://dev.linkvortex.htb/.git/info/exclude [200]
+[-] Fetching http://dev.linkvortex.htb/.git/refs/tags/v5.57.3 [200]
+[-] Fetching http://dev.linkvortex.htb/.git/objects/e6/54b0ed7f9c9aedf3180ee1fd94e7e43b29f000 [200]
+[-] Fetching http://dev.linkvortex.htb/.git/objects/50/864e0261278525197724b394ed4292414d9fec [200]
+[-] Fetching http://dev.linkvortex.htb/.git/objects/pack/pack-0b802d170fe45db10157bb8e02bfc9397d5e9d87.idx [200]
+[-] Fetching http://dev.linkvortex.htb/.git/objects/pack/pack-0b802d170fe45db10157bb8e02bfc9397d5e9d87.pack [200]
+[-] Sanitizing .git/config
+[-] Running git checkout .
+Updated 5596 paths from the index`
+```
+
+I ara ja tenim el repositori descarregat i reconstruit amb aquesta eina:
+
+```
+`┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ cd ~/linkvortex
+
+                                                                                                                                 
+┌──(kali㉿kali)-[~/linkvortex]
+└─$ ls
+Dockerfile.ghost  LICENSE  PRIVACY.md  README.md  SECURITY.md  apps  ghost  nx.json  package.json  yarn.lock
+                                                                                                                                 
+┌──(kali㉿kali)-[~/linkvortex]
+└─$ ls -la                     
+total 1432
+drwxrwxr-x  7 kali kali    4096 Dec 14 09:38 .
+drwx------ 20 kali kali    4096 Dec 14 09:38 ..
+-rw-rw-r--  1 kali kali     312 Dec 14 09:38 .editorconfig
+drwxrwxr-x  7 kali kali    4096 Dec 14 09:38 .git
+-rw-rw-r--  1 kali kali     122 Dec 14 09:38 .gitattributes
+drwxrwxr-x  7 kali kali    4096 Dec 14 09:38 .github
+-rw-rw-r--  1 kali kali    3082 Dec 14 09:38 .gitignore
+-rw-rw-r--  1 kali kali     135 Dec 14 09:38 .gitmodules
+drwxrwxr-x  2 kali kali    4096 Dec 14 09:38 .vscode
+-rw-rw-r--  1 kali kali     521 Dec 14 09:38 Dockerfile.ghost
+-rw-rw-r--  1 kali kali    1065 Dec 14 09:38 LICENSE
+-rw-rw-r--  1 kali kali    2860 Dec 14 09:38 PRIVACY.md
+-rw-rw-r--  1 kali kali    5413 Dec 14 09:38 README.md
+-rw-rw-r--  1 kali kali     518 Dec 14 09:38 SECURITY.md
+drwxrwxr-x  8 kali kali    4096 Dec 14 09:38 apps
+drwxrwxr-x 80 kali kali    4096 Dec 14 09:38 ghost
+-rw-rw-r--  1 kali kali     888 Dec 14 09:38 nx.json
+-rw-rw-r--  1 kali kali    3547 Dec 14 09:38 package.json
+-rw-rw-r--  1 kali kali 1385302 Dec 14 09:38 yarn.lock`
+```
+
+Ara toca remenar a veure si trobem alguna credencial o pista que ens pugui portar a alguna credencial per dins dels fitxers. Després de literalment hores de cerca als fitxers del repo, he trobat una contrasenya lligada a vàris mails de test, aquí en poso un només de mail però l'he trobat lligada a vàris mails:
+
+```
+const email = 'test@example.com';
+const password = 'thisissupersafe';
+```
+
+I sembla que és una contrasenya que havien canviat:
+
+```
+password_reset: [{
+                        token: token,
+                        newPassword: 'thisissupersafe',
+                        ne2Password: 'thisissupersafe'
+                    }]`
+```
+
+
+També apareix vàries vegades la password ``password: '12345678910'``  i també hi ha una password que és la següent:
+
+```
+const email = 'test@example.com';
+const password = 'OctopiFociPilfer45';`
+```
+
+Provarem aquestes credencials a veure i alguna ens serveix per accedir per ssh a la màquina.
 
