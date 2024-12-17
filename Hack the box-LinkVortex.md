@@ -655,7 +655,7 @@ drwxrwxr-x  8 kali kali    4096 Dec 14 09:38 apps
 drwxrwxr-x 80 kali kali    4096 Dec 14 09:38 ghost
 -rw-rw-r--  1 kali kali     888 Dec 14 09:38 nx.json
 -rw-rw-r--  1 kali kali    3547 Dec 14 09:38 package.json
--rw-rw-r--  1 kali kali 1385302 Dec 14 09:38 yarn.lock`
+-rw-rw-r--  1 kali kali 1385302 Dec 14 09:38 yarn.lock
 ```
 
 Ara toca remenar a veure si trobem alguna credencial o pista que ens pugui portar a alguna credencial per dins dels fitxers. Després de literalment hores de cerca als fitxers del repo, he trobat una contrasenya lligada a vàris mails de test, aquí en poso un només de mail però l'he trobat lligada a vàris mails:
@@ -672,7 +672,7 @@ password_reset: [{
                         token: token,
                         newPassword: 'thisissupersafe',
                         ne2Password: 'thisissupersafe'
-                    }]`
+                    }]
 ```
 
 
@@ -680,7 +680,7 @@ També apareix vàries vegades la password ``password: '12345678910'``  i també
 
 ```
 const email = 'test@example.com';
-const password = 'OctopiFociPilfer45';`
+const password = 'OctopiFociPilfer45';
 ```
 
 Provarem aquestes credencials a veure i alguna ens serveix per accedir per ssh a la màquina.
