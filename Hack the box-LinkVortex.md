@@ -544,7 +544,7 @@ Per tant, he buscat per internet i he vist que hi ha un script/eina en python pe
 Ara, l'instal·laré a veure si ens funciona i podem reconstruir el repositori que hem descarregat:
 
 ```
-`┌──(kali㉿kali)-[~/Documents]
+┌──(kali㉿kali)-[~/Documents]
 └─$ pip install git-dumper
 Defaulting to user installation because normal site-packages is not writeable
 Collecting git-dumper
@@ -574,7 +574,7 @@ Successfully installed dulwich-0.22.6 git-dumper-1.0.8 requests-pkcs12-1.25
 Ara descarregarem i  reconstruirem el repositori una altra vegada però amb aquesta eina:
 
 ```
-`┌──(kali㉿kali)-[~/Documents]
+┌──(kali㉿kali)-[~/Documents]
 └─$ git-dumper http://dev.linkvortex.htb/.git/ ~/linkvortex
 
 [-] Testing http://dev.linkvortex.htb/.git/HEAD [200]
@@ -684,4 +684,7 @@ const password = 'OctopiFociPilfer45';
 ```
 
 Provarem aquestes credencials a veure i alguna ens serveix per accedir per ssh a la màquina.
+
+
+## MÀQUINA EN PROGRÉS 
 
