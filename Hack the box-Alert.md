@@ -250,7 +250,7 @@ the credentials required.</p>
 </body></html>
 ````
 
-També hem fet un escaneig de dominis amb gobuster i ehm trobat 3 dominis:
+També hem fet un escaneig de directoris amb gobuster i hem trobat 3 dominis:
 
 ````
 ──(kali㉿kali)-[~]
