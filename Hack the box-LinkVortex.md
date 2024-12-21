@@ -795,5 +795,13 @@ Sembla que ha funcionat, però no trobo res a través d'això.
 
 Per tant, ara el següent pas serà provar aquestes credencials al dashboard de ghost trobat a http://dev.linkvortex.htb/ghost:
 
+![image](https://github.com/user-attachments/assets/8f0a6dcd-12db-4d1c-a784-dba667f40959)
+
+Ara hem pogut per fi treure ús de les credencials i hem pogut accedir al dashboard de l'aplicació/programa Ghost. Ghost és un programa basat en NodeJS de gestió de continguts enfocat a blocs, amb multitud dintegracions i que permet una completa personalització de laspecte. En conjunt, és una solució que resulta molt amigable per a qualsevol desenvolupador. Però on realment destaca és el seu rendiment.
+
+![image](https://github.com/user-attachments/assets/f3083692-6f3b-4977-b951-bc3aa700332e)
+
+
+
 MÀQUINA EN PROCÉS.
 
